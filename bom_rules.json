@@ -1,0 +1,655 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "fecha": "2026-02-06",
+    "descripcion": "Reglas paramétricas de BOM (Bill of Materials) por sistema constructivo. Define cómo calcular cantidades de accesorios a partir de las dimensiones del proyecto.",
+    "autor": "BMC Uruguay / Panelin Team",
+    "nota": "Todas las cantidades se calculan con redondeo hacia arriba (ceil). Los precios se obtienen de accessories_catalog.json."
+  },
+  "convenciones": {
+    "unidades_estandar": {
+      "area": "m2",
+      "longitud": "ml",
+      "cantidad": "unid",
+      "sellador": "tubo",
+      "kit": "kit"
+    },
+    "redondeo": {
+      "paneles": "ceil (siempre redondear hacia arriba)",
+      "perfiles": "ceil(longitud_total / largo_std_perfil)",
+      "fijaciones": "ceil (nunca dejar puntos sin fijar)",
+      "sellador": "ceil(perimetro / rendimiento_tubo)"
+    },
+    "iva": {
+      "incluido_en_precios": true,
+      "tasa": 0.22,
+      "nota": "Los precios de accessories_catalog.json YA incluyen IVA. NO sumar IVA adicional."
+    },
+    "moneda": "USD"
+  },
+  "sistemas": {
+    "techo_isodec_eps": {
+      "nombre": "Techo con ISODEC EPS (cubierta pesada)",
+      "producto_ref": "ISODEC_EPS",
+      "ancho_util_m": 1.12,
+      "sistema_fijacion": "varilla_tuerca",
+      "pendiente_minima_pct": 7,
+      "parametros_entrada": {
+        "largo_m": "Largo del techo en metros (dirección del panel)",
+        "ancho_m": "Ancho del techo en metros (perpendicular al panel)",
+        "espesor_mm": "Espesor del panel (100, 150, 200, 250)",
+        "tipo_estructura": "metal | hormigon | madera",
+        "finish": {
+          "material": "GP (galvanizado prepintado) | AL (aluzinc)",
+          "espesor_chapa_mm": "0.5 por defecto",
+          "color": "Blanco | Gris | Terracota"
+        }
+      },
+      "formulas": {
+        "area_m2": "largo_m × ancho_m",
+        "paneles_necesarios": "ceil(ancho_m / ancho_util_m)",
+        "apoyos_por_panel": "ceil(largo_m / autoportancia_m) + 1",
+        "puntos_fijacion": "ceil((paneles_necesarios × apoyos_por_panel × 2) + (largo_m × 2 / 2.5))",
+        "varilla_cantidad": "ceil(puntos_fijacion / 4)",
+        "tuercas": {
+          "metal": "puntos_fijacion × 2",
+          "hormigon": "puntos_fijacion × 1"
+        },
+        "tacos_hormigon": "puntos_fijacion × 1 (solo si tipo_estructura == hormigon)",
+        "arandelas_carrocero": "puntos_fijacion × 1",
+        "tortugas_pvc": "puntos_fijacion × 1",
+        "gotero_frontal_piezas": "ceil((paneles_necesarios × ancho_util_m) / largo_std_gotero_frontal)",
+        "gotero_lateral_piezas": "ceil((largo_m × 2) / largo_std_gotero_lateral)",
+        "babeta_lateral_ml": "largo_m × 2",
+        "babeta_lateral_piezas": "ceil(babeta_lateral_ml / largo_std_babeta)",
+        "encuentro_muro_ml": "ancho_m (si aplica)",
+        "encuentro_muro_piezas": "ceil(encuentro_muro_ml / largo_std_babeta)",
+        "cumbrera_piezas": "ceil(ancho_m / largo_std_cumbrera) (si aplica)",
+        "fijaciones_perfileria": "ceil(metros_lineales_totales_perfiles / 0.30)",
+        "silicona_tubos": "ceil(perimetro_expuesto_ml / 8)",
+        "cinta_butilo_rollos": "ceil(perimetro_expuesto_ml / 22.5)"
+      },
+      "largos_estandar_m": {
+        "gotero_frontal": 3.03,
+        "gotero_lateral": 3.0,
+        "babeta_adosar": 3.03,
+        "babeta_empotrar": 3.03,
+        "babeta_lateral": 3.0,
+        "cumbrera": 3.0,
+        "perfil_u": 3.0,
+        "canalon": 3.03,
+        "vaina": 3.0,
+        "soporte_canalon": 3.0
+      },
+      "reglas_corte": {
+        "solape_ml": 0.05,
+        "desperdicio_pct": 3,
+        "nota": "Los perfiles se solapan 5cm en cada unión. Agregar 3% de desperdicio."
+      },
+      "items_bom": [
+        {
+          "tipo": "panel",
+          "referencia": "ISODEC_EPS",
+          "unidad": "m2",
+          "formula": "area_m2"
+        },
+        {
+          "tipo": "gotero_frontal",
+          "referencia": "accessories_catalog→gotero_frontal→espesor_mm",
+          "unidad": "unid",
+          "formula": "gotero_frontal_piezas"
+        },
+        {
+          "tipo": "gotero_lateral",
+          "referencia": "accessories_catalog→gotero_lateral→espesor_mm",
+          "unidad": "unid",
+          "formula": "gotero_lateral_piezas"
+        },
+        {
+          "tipo": "babeta_adosar",
+          "referencia": "accessories_catalog→babeta_adosar→ISODEC",
+          "unidad": "unid",
+          "formula": "encuentro_muro_piezas"
+        },
+        {
+          "tipo": "babeta_empotrar",
+          "referencia": "accessories_catalog→babeta_empotrar→ISODEC",
+          "unidad": "unid",
+          "formula": "encuentro_muro_piezas"
+        },
+        {
+          "tipo": "cumbrera",
+          "referencia": "accessories_catalog→cumbrera→ISODEC",
+          "unidad": "unid",
+          "formula": "cumbrera_piezas"
+        },
+        {
+          "tipo": "perfil_u",
+          "referencia": "accessories_catalog→perfil→espesor_mm",
+          "unidad": "unid",
+          "formula": "ceil(perimetro / largo_std)"
+        },
+        {
+          "tipo": "canalon",
+          "referencia": "accessories_catalog→canalon→espesor_mm",
+          "unidad": "unid",
+          "formula": "ceil(ancho_m / largo_std_canalon)"
+        },
+        {
+          "tipo": "soporte_canalon",
+          "referencia": "accessories_catalog→soporte→ISODEC",
+          "unidad": "unid",
+          "formula": "ceil(ancho_m / 1.5)"
+        },
+        {
+          "tipo": "varilla",
+          "referencia": "varilla_3_8",
+          "unidad": "unid",
+          "formula": "varilla_cantidad"
+        },
+        {
+          "tipo": "tuerca",
+          "referencia": "tuerca_3_8",
+          "unidad": "unid",
+          "formula": "tuercas"
+        },
+        {
+          "tipo": "arandela_carrocero",
+          "referencia": "arandela_carrocero_3_8",
+          "unidad": "unid",
+          "formula": "arandelas_carrocero"
+        },
+        {
+          "tipo": "tortuga_pvc",
+          "referencia": "tortuga_pvc",
+          "unidad": "unid",
+          "formula": "tortugas_pvc"
+        },
+        {
+          "tipo": "taco",
+          "referencia": "taco_3_8",
+          "unidad": "unid",
+          "formula": "tacos_hormigon",
+          "condicion": "tipo_estructura == hormigon"
+        },
+        {
+          "tipo": "silicona",
+          "referencia": "silicona_neutra",
+          "unidad": "tubo",
+          "formula": "silicona_tubos"
+        },
+        {
+          "tipo": "cinta_butilo",
+          "referencia": "cinta_butilo",
+          "unidad": "rollo",
+          "formula": "cinta_butilo_rollos"
+        },
+        {
+          "tipo": "fijacion_perfileria",
+          "referencia": "remache_o_t1",
+          "unidad": "unid",
+          "formula": "fijaciones_perfileria"
+        }
+      ]
+    },
+    "techo_isodec_pir": {
+      "nombre": "Techo con ISODEC PIR (cubierta pesada ignífuga)",
+      "producto_ref": "ISODEC_PIR",
+      "ancho_util_m": 1.12,
+      "sistema_fijacion": "varilla_tuerca",
+      "pendiente_minima_pct": 7,
+      "hereda_de": "techo_isodec_eps",
+      "diferencias": {
+        "espesores_disponibles": [
+          50,
+          80,
+          120
+        ],
+        "perfileria_especifica": "Los goteros y perfiles para ISODEC PIR tienen SKUs y precios diferentes (ver accessories_catalog con compatibilidad ISODEC y composición PIR)",
+        "nota_seguridad": "Recomendado para industrias, depósitos y proyectos con requerimientos de resistencia al fuego"
+      }
+    },
+    "techo_isoroof_3g": {
+      "nombre": "Techo con ISOROOF 3G (cubierta liviana)",
+      "producto_ref": "ISOROOF_3G",
+      "ancho_util_m": 1.0,
+      "sistema_fijacion": "caballete_tornillo",
+      "pendiente_minima_pct": 7,
+      "parametros_entrada": {
+        "largo_m": "Largo del techo en metros",
+        "ancho_m": "Ancho del techo en metros",
+        "espesor_mm": "Espesor del panel (30, 50, 80)",
+        "tipo_estructura": "madera | metal"
+      },
+      "formulas": {
+        "area_m2": "largo_m × ancho_m",
+        "paneles_necesarios": "ceil(ancho_m / 1.0)",
+        "apoyos_por_panel": "ceil(largo_m / autoportancia_m) + 1",
+        "caballetes": "paneles_necesarios × apoyos_por_panel",
+        "tornillo_aguja_5": "caballetes × 1",
+        "tornillo_t1_perfileria": "ceil(metros_lineales_totales_perfiles / 0.30)",
+        "gotero_frontal_piezas": "ceil((paneles_necesarios × 1.0) / 3.03)",
+        "gotero_lateral_piezas": "ceil((largo_m × 2) / 3.0)",
+        "babeta_superior_piezas": "ceil(ancho_m / 3.03)",
+        "babeta_lateral_piezas": "ceil((largo_m × 2) / 3.0)",
+        "cumbrera_piezas": "ceil(ancho_m / 3.0)",
+        "silicona_tubos": "ceil(perimetro_expuesto_ml / 8)",
+        "cinta_butilo_rollos": "ceil(perimetro_expuesto_ml / 22.5)"
+      },
+      "nota": "ISOROOF 3G a madera NO usa varilla ni tuercas, usa caballete + tornillo",
+      "items_bom": [
+        {
+          "tipo": "panel",
+          "referencia": "ISOROOF_3G",
+          "unidad": "m2",
+          "formula": "area_m2"
+        },
+        {
+          "tipo": "caballete",
+          "referencia": "accessories_catalog→caballete→ISOROOF",
+          "unidad": "unid",
+          "formula": "caballetes"
+        },
+        {
+          "tipo": "gotero_frontal",
+          "referencia": "accessories_catalog→gotero_frontal→ISOROOF",
+          "unidad": "unid",
+          "formula": "gotero_frontal_piezas"
+        },
+        {
+          "tipo": "gotero_lateral",
+          "referencia": "accessories_catalog→gotero_lateral→ISOROOF",
+          "unidad": "unid",
+          "formula": "gotero_lateral_piezas"
+        },
+        {
+          "tipo": "babeta_superior",
+          "referencia": "accessories_catalog→babeta_superior→ISOROOF",
+          "unidad": "unid",
+          "formula": "babeta_superior_piezas"
+        },
+        {
+          "tipo": "babeta_lateral",
+          "referencia": "accessories_catalog→babeta_lateral→ISOROOF",
+          "unidad": "unid",
+          "formula": "babeta_lateral_piezas"
+        },
+        {
+          "tipo": "cumbrera",
+          "referencia": "accessories_catalog→cumbrera→ISOROOF",
+          "unidad": "unid",
+          "formula": "cumbrera_piezas"
+        },
+        {
+          "tipo": "silicona",
+          "referencia": "silicona_neutra",
+          "unidad": "tubo",
+          "formula": "silicona_tubos"
+        },
+        {
+          "tipo": "cinta_butilo",
+          "referencia": "cinta_butilo",
+          "unidad": "rollo",
+          "formula": "cinta_butilo_rollos"
+        },
+        {
+          "tipo": "fijacion_perfileria",
+          "referencia": "tornillo_t1",
+          "unidad": "unid",
+          "formula": "tornillo_t1_perfileria"
+        }
+      ]
+    },
+    "pared_isopanel_eps": {
+      "nombre": "Pared/Fachada con ISOPANEL EPS",
+      "producto_ref": "ISOPANEL_EPS",
+      "ancho_util_m": 1.14,
+      "sistema_fijacion": "varilla_tuerca",
+      "parametros_entrada": {
+        "largo_m": "Largo del muro en metros",
+        "alto_m": "Alto del muro en metros",
+        "espesor_mm": "Espesor del panel (50, 100, 150, 200)"
+      },
+      "formulas": {
+        "area_m2": "largo_m × alto_m",
+        "paneles_necesarios": "ceil(largo_m / ancho_util_m)",
+        "perfil_u_inferior_piezas": "ceil(largo_m / 3.0)",
+        "perfil_u_superior_piezas": "ceil(largo_m / 3.0)",
+        "perfil_angular_piezas": "ceil((alto_m × esquinas) / 3.0)",
+        "fijaciones_por_panel": "ceil(alto_m / 0.6) × 2",
+        "fijaciones_total": "paneles_necesarios × fijaciones_por_panel",
+        "silicona_tubos": "ceil(juntas_ml / 8)",
+        "cinta_butilo_rollos": "ceil(juntas_ml / 22.5)"
+      },
+      "items_bom": [
+        {
+          "tipo": "panel",
+          "referencia": "ISOPANEL_EPS",
+          "unidad": "m2",
+          "formula": "area_m2"
+        },
+        {
+          "tipo": "perfil_u",
+          "referencia": "accessories_catalog→perfil→espesor_mm",
+          "unidad": "unid",
+          "formula": "perfil_u_inferior_piezas + perfil_u_superior_piezas"
+        },
+        {
+          "tipo": "varilla",
+          "referencia": "varilla_3_8",
+          "unidad": "unid",
+          "formula": "varilla_cantidad"
+        },
+        {
+          "tipo": "tuerca",
+          "referencia": "tuerca_3_8",
+          "unidad": "unid",
+          "formula": "tuercas"
+        },
+        {
+          "tipo": "arandela_carrocero",
+          "referencia": "arandela_carrocero_3_8",
+          "unidad": "unid",
+          "formula": "fijaciones_total"
+        },
+        {
+          "tipo": "tortuga_pvc",
+          "referencia": "tortuga_pvc",
+          "unidad": "unid",
+          "formula": "fijaciones_total"
+        },
+        {
+          "tipo": "silicona",
+          "referencia": "silicona_neutra",
+          "unidad": "tubo",
+          "formula": "silicona_tubos"
+        },
+        {
+          "tipo": "cinta_butilo",
+          "referencia": "cinta_butilo",
+          "unidad": "rollo",
+          "formula": "cinta_butilo_rollos"
+        }
+      ]
+    },
+    "pared_isowall_pir": {
+      "nombre": "Pared/Fachada con ISOWALL PIR",
+      "producto_ref": "ISOWALL_PIR",
+      "ancho_util_m": 1.1,
+      "sistema_fijacion": "varilla_tuerca",
+      "hereda_de": "pared_isopanel_eps",
+      "diferencias": {
+        "espesores_disponibles": [
+          50,
+          80
+        ],
+        "ancho_util_m": 1.1,
+        "nota_seguridad": "Recomendado para industrias y proyectos con requerimientos de resistencia al fuego"
+      }
+    },
+    "pared_isofrig_pir": {
+      "nombre": "Cámara Frigorífica con ISOFRIG PIR",
+      "producto_ref": "ISOFRIG_PIR",
+      "ancho_util_m": 1.1,
+      "sistema_fijacion": "varilla_tuerca",
+      "hereda_de": "pared_isopanel_eps",
+      "diferencias": {
+        "espesores_disponibles": [
+          40,
+          60,
+          80,
+          100,
+          150,
+          200
+        ],
+        "ancho_util_m": 1.1,
+        "perfileria_especifica": "Usar perfiles ISOFRIG específicos del accessories_catalog",
+        "nota": "Para cámaras frigoríficas, el cálculo incluye techo y paredes. Considerar puerta frigorífica."
+      }
+    }
+  },
+  "autoportancia": {
+    "descripcion": "Tabla de cargas y luces máximas por producto y espesor. La luz es la distancia entre apoyos (correas/vigas).",
+    "regla": "Si luz_proyecto > autoportancia_max → sugerir espesor mayor o apoyo adicional",
+    "tablas": {
+      "ISODEC_EPS": {
+        "100": {
+          "luz_max_m": 5.5,
+          "peso_kg_m2": 12.5
+        },
+        "150": {
+          "luz_max_m": 7.5,
+          "peso_kg_m2": 14.5
+        },
+        "200": {
+          "luz_max_m": 9.1,
+          "peso_kg_m2": 16.5
+        },
+        "250": {
+          "luz_max_m": 10.4,
+          "peso_kg_m2": 18.5
+        }
+      },
+      "ISODEC_PIR": {
+        "50": {
+          "luz_max_m": 3.5,
+          "peso_kg_m2": 10.0
+        },
+        "80": {
+          "luz_max_m": 5.5,
+          "peso_kg_m2": 11.5
+        },
+        "120": {
+          "luz_max_m": 7.6,
+          "peso_kg_m2": 13.5
+        }
+      },
+      "ISOROOF_3G": {
+        "30": {
+          "luz_max_m": 2.8,
+          "peso_kg_m2": 5.0
+        },
+        "50": {
+          "luz_max_m": 3.3,
+          "peso_kg_m2": 6.5
+        },
+        "80": {
+          "luz_max_m": 4.0,
+          "peso_kg_m2": 8.5
+        }
+      },
+      "ISOPANEL_EPS": {
+        "50": {
+          "luz_max_m": 3.0,
+          "peso_kg_m2": 10.0
+        },
+        "100": {
+          "luz_max_m": 5.5,
+          "peso_kg_m2": 12.5
+        },
+        "150": {
+          "luz_max_m": 7.5,
+          "peso_kg_m2": 14.5
+        },
+        "200": {
+          "luz_max_m": 9.1,
+          "peso_kg_m2": 16.5
+        }
+      }
+    },
+    "validacion": {
+      "formula": "luz_proyecto_m <= luz_max_m",
+      "si_no_cumple": [
+        "Sugerir espesor mayor que cumpla la luz",
+        "O sugerir agregar apoyo intermedio (reducir la luz)",
+        "Informar: 'La luz de X.X m excede la autoportancia del panel de Y mm (máx Z.Z m). Recomiendo...'"
+      ],
+      "margen_seguridad": "Se recomienda NO usar al 100% de la autoportancia; dejar un 10-15% de margen"
+    }
+  },
+  "kits_fijacion_detalle": {
+    "metal": {
+      "descripcion": "Fijación a estructura metálica",
+      "componentes_por_punto": {
+        "varilla_3_8": {
+          "cantidad": 0.25,
+          "nota": "1 varilla de 1m = 4 puntos de fijación"
+        },
+        "tuerca_3_8": {
+          "cantidad": 2
+        },
+        "arandela_carrocero_3_8": {
+          "cantidad": 1
+        },
+        "arandela_plana_3_8": {
+          "cantidad": 1
+        },
+        "tortuga_pvc": {
+          "cantidad": 1
+        }
+      }
+    },
+    "hormigon": {
+      "descripcion": "Fijación a estructura de hormigón",
+      "componentes_por_punto": {
+        "varilla_3_8": {
+          "cantidad": 0.25,
+          "nota": "1 varilla de 1m = 4 puntos de fijación"
+        },
+        "tuerca_3_8": {
+          "cantidad": 1
+        },
+        "taco_expansivo_3_8": {
+          "cantidad": 1
+        },
+        "arandela_carrocero_3_8": {
+          "cantidad": 1
+        },
+        "tortuga_pvc": {
+          "cantidad": 1
+        }
+      }
+    },
+    "madera_isoroof": {
+      "descripcion": "Fijación a madera para ISOROOF 3G",
+      "componentes_por_punto": {
+        "caballete": {
+          "cantidad": 1
+        },
+        "tornillo_aguja_5": {
+          "cantidad": 1
+        }
+      },
+      "perfileria": {
+        "tornillo_t1": {
+          "cada_cm": 30,
+          "nota": "1 cada 30cm para babetas y perfilería"
+        }
+      }
+    }
+  },
+  "ejemplo_calculo": {
+    "descripcion": "Ejemplo: Techo ISODEC EPS 100mm, 5m largo × 11m ancho, estructura metal",
+    "entrada": {
+      "sistema": "techo_isodec_eps",
+      "espesor_mm": 100,
+      "largo_m": 5.0,
+      "ancho_m": 11.0,
+      "tipo_estructura": "metal"
+    },
+    "calculo": {
+      "area_m2": 55.0,
+      "paneles_necesarios": "ceil(11.0 / 1.12) = 10",
+      "autoportancia_check": "5.0m <= 5.5m → CUMPLE",
+      "apoyos_por_panel": "ceil(5.0 / 5.5) + 1 = 2",
+      "puntos_fijacion": "ceil((10 × 2 × 2) + (5.0 × 2 / 2.5)) = ceil(40 + 4) = 44",
+      "varilla_cantidad": "ceil(44 / 4) = 11",
+      "tuercas_metal": "44 × 2 = 88",
+      "arandelas_carrocero": 44,
+      "tortugas_pvc": 44,
+      "gotero_frontal_piezas": "ceil((10 × 1.12) / 3.03) = ceil(3.70) = 4",
+      "gotero_lateral_piezas": "ceil((5.0 × 2) / 3.0) = ceil(3.33) = 4",
+      "babeta_isodec_adosar": "ceil(11.0 / 3.0) = 4 (si hay encuentro a muro)",
+      "cumbrera_piezas": "ceil(11.0 / 3.0) = 4 (si aplica)",
+      "perimetro_perfileria_ml": "11.0 + 11.0 + 5.0 + 5.0 = 32.0",
+      "fijaciones_perfileria": "ceil(32.0 / 0.30) = 107 (remaches o T1)",
+      "silicona_tubos": "ceil(32.0 / 8) = 4",
+      "cinta_butilo_rollos": "ceil(32.0 / 22.5) = 2"
+    },
+    "resultado_bom": [
+      {
+        "item": "ISODEC EPS 100mm",
+        "unidad": "m2",
+        "cantidad": 55.0,
+        "precio_unit": 46.07,
+        "total": 2533.85
+      },
+      {
+        "item": "Gotero Frontal 100mm",
+        "unidad": "unid",
+        "cantidad": 4,
+        "precio_unit": "→ accessories_catalog"
+      },
+      {
+        "item": "Gotero Lateral 100mm",
+        "unidad": "unid",
+        "cantidad": 4,
+        "precio_unit": "→ accessories_catalog"
+      },
+      {
+        "item": "Babeta ISODEC adosar",
+        "unidad": "unid",
+        "cantidad": 4,
+        "precio_unit": "→ accessories_catalog"
+      },
+      {
+        "item": "Cumbrera ISODEC",
+        "unidad": "unid",
+        "cantidad": 4,
+        "precio_unit": "→ accessories_catalog"
+      },
+      {
+        "item": "Varilla roscada 3/8 (1m)",
+        "unidad": "unid",
+        "cantidad": 11,
+        "precio_unit": 3.81
+      },
+      {
+        "item": "Tuerca 3/8 galv.",
+        "unidad": "unid",
+        "cantidad": 88,
+        "precio_unit": 0.15
+      },
+      {
+        "item": "Arandela carrocero 3/8",
+        "unidad": "unid",
+        "cantidad": 44,
+        "precio_unit": 2.05
+      },
+      {
+        "item": "Tortuga PVC blanca",
+        "unidad": "unid",
+        "cantidad": 44,
+        "precio_unit": 1.55
+      },
+      {
+        "item": "Silicona neutra",
+        "unidad": "tubo",
+        "cantidad": 4,
+        "precio_unit": 11.58
+      },
+      {
+        "item": "Cinta butilo",
+        "unidad": "rollo",
+        "cantidad": 2,
+        "precio_unit": 18.17
+      },
+      {
+        "item": "Remaches/T1 perfilería",
+        "unidad": "unid",
+        "cantidad": 107,
+        "precio_unit": "→ accessories_catalog"
+      }
+    ]
+  }
+}

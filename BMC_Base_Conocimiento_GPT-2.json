@@ -1,0 +1,438 @@
+{
+  "meta": {
+    "nombre": "BMC Uruguay - Sistema Unificado de Conocimiento y Cotización",
+    "version": "6.0-Unified-UserCorrections-mem-update-mem-update",
+    "fecha": "2026-01-27",
+    "validado_con": "31 presupuestos reales + Technical Truth Corrections + User Conversational Inputs",
+    "descripcion": "Fuente de verdad unificada para el Chatbot de BMC Uruguay. Incluye correcciones de usuario sobre fijaciones, derivaciones y accesorios.",
+    "fuentes_referencia": [
+      "https://bmcuruguay.com.uy (Catalogo Oficial)"
+    ]
+  },
+  "institucional": {
+    "nombre_empresa": "BMC Uruguay",
+    "actividad_principal": "Comercialización, suministro y asesoramiento técnico de paneles aislantes y sistemas constructivos",
+    "importante": "BMC Uruguay NO fabrica. Suministra/comercializa productos de fabricantes especializados y brinda asesoramiento técnico integral.",
+    "diferencial": {
+      "descripcion": "Soluciones técnicas optimizadas para generar confort, ahorrar presupuesto, optimizar estructura, reducir tiempos de obra y evitar problemas a futuro",
+      "enfoque": "Venta consultiva - No somos despachantes de productos, somos asesores técnicos que acompañan la decisión de compra",
+      "valor_agregado": [
+        "Análisis técnico del proyecto antes de cotizar",
+        "Validación de autoportancia y requerimientos estructurales",
+        "Optimización de la solución para el caso específico del cliente",
+        "Asesoramiento en la elección del sistema más adecuado",
+        "Capacidad de decir 'no conviene' cuando corresponde"
+      ]
+    },
+    "alcance_servicios": {
+      "incluye": [
+        "Venta de materiales",
+        "Asesoramiento técnico",
+        "Cotizaciones detalladas",
+        "Soporte pre y post venta"
+      ],
+      "no_incluye": [
+        "Fabricación",
+        "Instalación/colocación"
+      ]
+    }
+  },
+  "identidad": {
+    "nombre_bot": "BMC Assistant",
+    "rol": "Experto Técnico y Comercial en Isopaneles y Construcción Seca - Soporte para comercialización y asesoramiento técnico (NO fabricación)",
+    "tono": "Profesional, técnico pero accesible, orientado a la Venta Consultiva.",
+    "objetivo": "Guiar al cliente hacia la solución técnica más adecuada (priorizando seguridad y eficiencia) y generar una cotización precisa.",
+    "aclaracion_critica": "BMC Uruguay comercializa y asesora, NO fabrica los productos."
+  },
+  "products": {
+    "ISODEC_EPS": {
+      "nombre_comercial": "Isodec / Isowall (EPS)",
+      "tipo": "cubierta_pesada",
+      "ignifugo": "Estándar (EPS Tipo F - Autoextinguible)",
+      "ancho_util": 1.12,
+      "sistema_fijacion": "varilla_tuerca",
+      "varilla": "3/8",
+      "espesores": {
+        "100": {
+          "autoportancia": 5.5,
+          "precio": 46.07,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 2.86
+        },
+        "150": {
+          "autoportancia": 7.5,
+          "precio": 51.5,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 4.29
+        },
+        "200": {
+          "autoportancia": 9.1,
+          "precio": 57.0,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 5.71
+        },
+        "250": {
+          "autoportancia": 10.4,
+          "precio": 62.5,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 7.14
+        }
+      },
+      "correcciones_tecnicas": [
+        "El isopanel de 100mm es el recomendado para viviendas en Uruguay."
+      ]
+    },
+    "ISODEC_PIR": {
+      "nombre_comercial": "Isodec (PIR)",
+      "tipo": "cubierta_pesada",
+      "ignifugo": "Excelente (PIR - Alta resistencia al fuego)",
+      "ancho_util": 1.12,
+      "sistema_fijacion": "varilla_tuerca",
+      "varilla": "3/8",
+      "espesores": {
+        "50": {
+          "autoportancia": 3.5,
+          "precio": 51.02,
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 2.27
+        },
+        "80": {
+          "autoportancia": 5.5,
+          "precio": 55.0,
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 3.64
+        },
+        "120": {
+          "autoportancia": 7.6,
+          "precio": 62.0,
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 5.45
+        }
+      },
+      "ventajas": [
+        "Mayor resistencia al fuego",
+        "Mejor aislación térmica por mm"
+      ]
+    },
+    "ISOROOF_3G": {
+      "nombre_comercial": "Isoroof Plus (3G)",
+      "tipo": "cubierta_liviana",
+      "ignifugo": "Estándar (EPS)",
+      "ancho_util": 1.0,
+      "sistema_fijacion": "caballete_tornillo",
+      "nota": "A madera NO usa varilla ni tuercas",
+      "espesores": {
+        "30": {
+          "autoportancia": 2.8,
+          "precio": 48.74,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 0.86
+        },
+        "50": {
+          "autoportancia": 3.3,
+          "precio": 53.0,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 1.43
+        },
+        "80": {
+          "autoportancia": 4.0,
+          "precio": 62.0,
+          "coeficiente_termico": 0.035,
+          "resistencia_termica": 2.29
+        }
+      }
+    },
+    "ISOPANEL_EPS": {
+      "nombre_comercial": "Isopanel Pared (EPS)",
+      "tipo": "pared",
+      "ignifugo": "Estándar (EPS Tipo F - Autoextinguible)",
+      "ancho_util": 1.14,
+      "sistema_fijacion": "varilla_tuerca",
+      "varilla": "3/8",
+      "espesores": {
+        "50": {
+          "precio": 41.88
+        },
+        "100": {
+          "precio": 46.0
+        },
+        "150": {
+          "precio": 51.5
+        },
+        "200": {
+          "precio": 57.0
+        }
+      }
+    },
+    "ISOWALL_PIR": {
+      "nombre_comercial": "Isowall Pared (PIR)",
+      "tipo": "pared",
+      "ignifugo": "Excelente (PIR - Alta resistencia al fuego)",
+      "ancho_util": 1.1,
+      "sistema_fijacion": "varilla_tuerca",
+      "espesores": {
+        "50": {
+          "precio": 54.65
+        },
+        "80": {
+          "precio": 64.0
+        }
+      }
+    },
+    "ISOFRIG_PIR": {
+      "nombre_comercial": "Isofrig (PIR)",
+      "tipo": "pared_frigorifica",
+      "ignifugo": "Excelente (PIR - Alta resistencia al fuego)",
+      "ancho_util": 1.1,
+      "sistema_fijacion": "varilla_tuerca",
+      "aplicacion": "Cámaras frigoríficas, cuartos fríos, industria alimenticia",
+      "caracteristicas": [
+        "Panel PIR especializado para aplicaciones frigoríficas",
+        "Alta resistencia al fuego",
+        "Excelente aislamiento térmico para control de temperatura",
+        "Apto para ambientes con temperaturas extremas"
+      ],
+      "espesores": {
+        "50": {
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 2.27,
+          "nota": "Consultar precio actualizado"
+        },
+        "80": {
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 3.64,
+          "nota": "Consultar precio actualizado"
+        },
+        "100": {
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 4.55,
+          "nota": "Consultar precio actualizado"
+        },
+        "120": {
+          "coeficiente_termico": 0.022,
+          "resistencia_termica": 5.45,
+          "nota": "Consultar precio actualizado"
+        },
+        "150": {
+          "precio": "Consultar",
+          "nota": "Consultar precio actualizado"
+        },
+        "200": {
+          "precio": "Consultar",
+          "nota": "Consultar precio actualizado"
+        }
+      },
+      "nota": "Panel específico para cámaras frigoríficas y logística de frío.",
+      "nota_importante": "Precios sujetos a cotización específica según requerimientos del proyecto frigorífico"
+    },
+    "HM_RUBBER": {
+      "nombre_comercial": "HM Rubber 7-en-1",
+      "tipo": "impermeabilizante",
+      "rendimiento": "1.5kg por m2 para impermeabilización total",
+      "aplicacion": "Directo sobre óxido firme, hormigón, chapa, etc.",
+      "correcciones_tecnicas": [
+        "No es pintura, es caucho líquido (membrana)."
+      ]
+    },
+    "ANGULO_ALUMINIO": {
+      "nombre_comercial": "Ángulo de Aluminio Estructural",
+      "tipo": "accesorio_estructural",
+      "funcion": "Vinculante entre fachadas y techos",
+      "instalacion": {
+        "a_hormigon": "Se fija con kit de fijación a hormigón",
+        "a_metal": "Se fija con tornillo T2"
+      }
+    },
+    "TORTUGAS_PVC": {
+      "nombre_comercial": "Tortugas / Arandelas Plásticas de PVC",
+      "tipo": "accesorio_fijacion",
+      "funcion": "Sellar e impermeabilizar la fijación, cubriendo todo el kit",
+      "instalacion": "Se coloca al último"
+    }
+  },
+  "formulas_cotizacion": {
+    "costo_panel": "PRECIO * LARGO * CANTIDAD * ANCHO_UTIL",
+    "calculo_apoyos": "ROUNDUP((LARGO / AUTOPORTANCIA) + 1)",
+    "puntos_fijacion_techo": "ROUNDUP(((CANTIDAD * APOYOS) * 2) + (LARGO * 2 / 2.5))",
+    "varilla_cantidad": "ROUNDUP(PUNTOS / 4)",
+    "tuercas_metal": "PUNTOS * 2",
+    "tuercas_hormigon": "PUNTOS * 1",
+    "tacos_hormigon": "PUNTOS * 1",
+    "arandelas_carrocero": "PUNTOS * 1",
+    "tortugas_pvc": "PUNTOS * 1",
+    "gotero_frontal": "ROUNDUP((CANTIDAD * ANCHO_UTIL) / 3)",
+    "gotero_lateral": "ROUNDUP((LARGO * 2) / 3)",
+    "fijaciones_perfileria": "ROUNDUP(METROS_LINEALES_TOTALES / 0.30)",
+    "remaches": "Calculados dentro de fijaciones_perfileria (indistinto T1)",
+    "silicona": "ROUNDUP(TOTAL_ML / 8)"
+  },
+  "formulas_ahorro_energetico": {
+    "diferencia_resistencia_termica": "RESISTENCIA_MAYOR - RESISTENCIA_MENOR",
+    "reduccion_transmision_calor": "(DIFERENCIA_RESISTENCIA / RESISTENCIA_MENOR) * 100",
+    "ahorro_energetico_anual": "AREA_M2 * DIFERENCIA_RESISTENCIA * GRADOS_DIA_CALEFACCION * PRECIO_KWH * HORAS_DIA * DIAS_ESTACION",
+    "nota": "Para Uruguay: marzo-noviembre (9 meses), temperatura objetivo 22°C, considerar grados-día de calefacción según zona"
+  },
+  "datos_referencia_uruguay": {
+    "precio_kwh_uruguay": {
+      "residencial": 0.12,
+      "comercial": 0.15,
+      "unidad": "USD/kWh",
+      "fuente": "Referencia UTE 2025"
+    },
+    "estacion_calefaccion": {
+      "meses": 9,
+      "periodo": "marzo a noviembre",
+      "horas_dia_promedio": 12,
+      "temperatura_objetivo": 22,
+      "grados_dia_promedio": 8
+    },
+    "costos_estructura_referencia": {
+      "viga_metalica_estimado": 15,
+      "unidad": "USD/metro_lineal",
+      "nota": "Estimado - consultar costos locales reales incluyendo mano de obra. Referencias: SUNCA, constructores locales."
+    }
+  },
+  "kits_fijacion": {
+    "metal": {
+      "tuercas_por_punto": 2,
+      "requiere_taco": false,
+      "componentes": [
+        "varilla",
+        "tuerca",
+        "arandela_carrocero",
+        "arandela_plana",
+        "arandela_pp",
+        "tortuga_pvc"
+      ],
+      "nota_usuario": "Arandela carrocera funciona como contención ante movimientos. Tortuga PVC va al final para sellar."
+    },
+    "hormigon": {
+      "tuercas_por_punto": 1,
+      "requiere_taco": true,
+      "componentes": [
+        "varilla",
+        "tuerca",
+        "taco_expansivo",
+        "arandela_carrocero",
+        "arandela_pp",
+        "tortuga_pvc"
+      ]
+    },
+    "madera_isoroof": {
+      "usa_varilla": false,
+      "usa_tuercas": false,
+      "componentes": [
+        "caballete",
+        "tornillo_aguja_5",
+        "tornillo_t1"
+      ]
+    },
+    "perfileria": {
+      "componentes_opcionales": [
+        "Remaches",
+        "T1"
+      ],
+      "regla_costo": "El costo es el mismo, depende del cliente.",
+      "calculo": "1 fijación cada 30 cm para babetas, goterones y perfilería perimetral."
+    }
+  },
+  "precios_accesorios_referencia": {
+    "_nota": "Precios de referencia rápida. Para el catálogo completo con 70+ ítems, consultar accessories_catalog.json",
+    "varilla_3_8": 3.81,
+    "tuerca_3_8": 0.15,
+    "taco_3_8": 1.17,
+    "silicona_pomo": 11.58,
+    "gotero_frontal_isodec_100mm": 19.12,
+    "arandela_carrocero_3_8": 2.05,
+    "tortuga_pvc_blanca": 1.55
+  },
+  "reglas_negocio": {
+    "iva": 0.22,
+    "moneda": "USD",
+    "derivacion": {
+      "regla_oro": "NUNCA derivar a proveedor externo.",
+      "accion": "Derivar SIEMPRE a los agentes de ventas de BMC URUGUAY."
+    },
+    "pendiente_minima_techo": "7%",
+    "perfil_5852_obligatorio_en": [
+      "pretiles",
+      "sobre techos existentes",
+      "refuerzos perimetrales"
+    ],
+    "estrategia_venta": [
+      "DEFINIR DIFERENCIAL: Soluciones técnicas optimizadas para generar confort, ahorrar presupuesto, estructura, tiempos de obra y problemas a futuro.",
+      "BMC NO FABRICA: Suministra y comercializa sistemas constructivos de alta calidad y brinda asesoramiento técnico integral.",
+      "Si el cliente quiere techar un área determinada, preguntar siempre la distancia entre apoyos (luz) existente o proyectada.",
+      "Sugerir el panel que permita mayor autoportancia para ahorrar en estructura de soporte.",
+      "Si es vivienda o industria con riesgo, sugerir PIR por seguridad.",
+      "Siempre ofrecer opciones: Económica vs Estructuralmente Eficiente.",
+      "En TODAS las comparativas de paneles, incluir SIEMPRE las ventajas de aislamiento térmico y ahorro energético, no solo al comparar 100mm vs 150mm, sino en todas las opciones disponibles.",
+      "Sugerir al cliente considerar el valor a largo plazo en términos de confort, ahorro en climatización y mejoras de aislamiento cuando se elige un panel más grueso.",
+      "Cuando falte un costo exacto (como el de una viga), explicar que es un estimado y sugerir que el cliente considere costos reales locales, incluyendo mano de obra. Consultar referencias como SUNCA u otras bases de precios de construcción en Uruguay.",
+      "Proporcionar un cálculo aproximado del ahorro energético y la mejora de aislamiento en una habitación estándar al pasar a un panel de mayor espesor.",
+      "Aplicar lógica que combine el costo inicial con el valor a largo plazo, ofreciendo al cliente no solo el precio, sino también el impacto en confort, eficiencia energética y ahorro económico."
+    ],
+    "servicios": {
+      "instalaciones": false,
+      "nota": "BMC vende materiales y brinda asesoramiento técnico; no realiza colocación."
+    },
+    "politica_audio": {
+      "transcripcion_habilitada": false,
+      "instruccion": "Si el usuario comparte audio, solicitar transcripción o resumen en texto para poder analizarlo."
+    },
+    "politica_precios": {
+      "precio_web_es_referencia": true,
+      "cotizacion_interna_puede_diferir": true,
+      "cotizacion_interna_suele_ser_neta_sin_iva": true,
+      "requiere_validacion_comercial": true,
+      "nota": "No reemplazar precios Shopify en KB; registrar como precio interno aprobado en la cotización."
+    },
+    "guardrails_precision": [
+      "No afirmar precios de accesorios si no están en la KB maestra.",
+      "No confundir gotero frontal con gotero lateral; si falta precio, indicar que no está disponible en base.",
+      "No recomendar instaladores externos bajo ninguna circunstancia."
+    ]
+  },
+  "contacto": {
+    "direccion_showroom": "Montevideo, Uruguay (Coordinar por WhatsApp)",
+    "horarios": "Lunes a Viernes 9-18, Sábados 9-13"
+  },
+  "user_corrections": [
+    {
+      "fuente": "MCP_Memory",
+      "fecha_captura": "2026-01-27T05:04:22.662255",
+      "entidad": "IVA Uruguay 2026",
+      "tipo": "Regla de Negocio",
+      "observaciones": [
+        "El IVA estándar para productos de construcción sigue siendo 22% en 2026."
+      ]
+    },
+    {
+      "fuente": "MCP_Memory",
+      "fecha_captura": "2026-01-27T05:04:22.662264",
+      "entidad": "Mauro BMC",
+      "tipo": "Preferencia Cliente",
+      "observaciones": [
+        "Prefiere recibir cotizaciones con desglose de accesorios por separado."
+      ]
+    },
+    {
+      "fuente": "MCP_Memory",
+      "fecha_captura": "2026-01-27T05:09:14.586561",
+      "entidad": "IVA Uruguay 2026",
+      "tipo": "Regla de Negocio",
+      "observaciones": [
+        "El IVA estándar para productos de construcción sigue siendo 22% en 2026."
+      ]
+    },
+    {
+      "fuente": "MCP_Memory",
+      "fecha_captura": "2026-01-27T05:09:14.586593",
+      "entidad": "Mauro BMC",
+      "tipo": "Preferencia Cliente",
+      "observaciones": [
+        "Prefiere recibir cotizaciones con desglose de accesorios por separado."
+      ]
+    }
+  ]
+}

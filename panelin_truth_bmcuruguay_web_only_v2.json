@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "schema_version": "panelin_truth_catalog_v2_web_only",
+    "generated_at_utc": "2026-01-15T17:52:05Z",
+    "sources": {
+      "site": "https://bmcuruguay.com.uy/",
+      "platform": "Shopify"
+    },
+    "note": "Este archivo contiene SOLO snapshot público de la tienda (web). No incluye estimaciones internas ni stock exacto (puede requerir Admin API)."
+  },
+  "recrawl_policy": {
+    "scheduled_full_refresh": "daily",
+    "on_demand_refresh": {
+      "enabled": true,
+      "ttl_seconds": 3600,
+      "tracked_fields": [
+        "price",
+        "compare_at",
+        "availability",
+        "variants",
+        "images",
+        "description_html"
+      ]
+    },
+    "refresh_method_priority": [
+      "Shopify_Admin_API",
+      "Shopify_Storefront_API",
+      "HTML_fallback"
+    ]
+  },
+  "catalog_snapshots": {
+    "bmcuruguay_shopify_public": {
+      "isopanel_eps_paredes_fachadas": {
+        "title": "ISOPANEL EPS (Paredes y Fachadas) / 50 - 100 - 150 - 200 - 250 mm.",
+        "url": "https://bmcuruguay.com.uy/products/isopanel-eps-paredes-y-fachadas",
+        "price_display": "USD 41.88 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Espesor",
+          "Color"
+        ],
+        "option_values": {
+          "Espesor": [
+            "50 mm",
+            "100 mm",
+            "150 mm",
+            "200 mm",
+            "250 mm"
+          ]
+        },
+        "ancho_util_m": 1.14,
+        "largo_min_m": 2.3,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: 12 a 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isodec_eps_techo": {
+        "title": "ISODEC EPS (Techos y Cubiertas) / 100 - 150 - 200 - 250 mm.",
+        "url": "https://bmcuruguay.com.uy/products/isopanel-isodec-eps-cubiertas-bmc-reloaded",
+        "price_display": "USD 46.07 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Espesor",
+          "Color"
+        ],
+        "option_values": {
+          "Espesor": [
+            "100 mm",
+            "150 mm",
+            "200 mm",
+            "250 mm"
+          ]
+        },
+        "ancho_util_m": 1.12,
+        "largo_min_m": 2.3,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: entre 12 y 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isodec_pir_techo": {
+        "title": "ISODEC® PIR (Techos y Cubiertas) / 50 - 80 - 120 mm.",
+        "url": "https://bmcuruguay.com.uy/products/isodec%C2%AE-pir",
+        "price_display": "USD 51.02 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Espesor",
+          "Color"
+        ],
+        "option_values": {
+          "Espesor": [
+            "50 mm",
+            "80 mm",
+            "120 mm"
+          ]
+        },
+        "ancho_util_m": 1.12,
+        "largo_min_m": 3.5,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: entre 12 y 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isowall_pir_fachadas": {
+        "title": "ISOWALL® PIR- Fachadas - (50 mm - 80 mm)",
+        "url": "https://bmcuruguay.com.uy/products/isowall-%C2%AE-pir",
+        "price_display": "USD 54.65 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Espesor",
+          "Color"
+        ],
+        "option_values": {
+          "Espesor": [
+            "50 mm",
+            "80 mm"
+          ]
+        },
+        "ancho_util_m": 1.0,
+        "largo_min_m": 3.5,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: 12 a 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isoroof_3g": {
+        "title": "ISOROOF. 3G.",
+        "url": "https://bmcuruguay.com.uy/products/isoroof-3g-gris-rojo-blanco-bromyros",
+        "price_display": "USD 48.74 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Color"
+        ],
+        "option_values": {},
+        "ancho_util_m": 1.0,
+        "largo_min_m": 3.5,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: entre 12 y 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isoroof_plus_3g": {
+        "title": "ISOROOF PLUS. 3G.",
+        "url": "https://bmcuruguay.com.uy/products/iroof80-pls",
+        "price_display": "USD 71.76 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Color"
+        ],
+        "option_values": {},
+        "ancho_util_m": 1.0,
+        "largo_min_m": 3.5,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: entre 12 y 14 m.",
+        "stock_status": "agotado_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "isoroof_foil_3g": {
+        "title": "ISOROOF FOIL. 3G.",
+        "url": "https://bmcuruguay.com.uy/products/iagro30",
+        "price_display": "USD 39.54 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Color"
+        ],
+        "option_values": {},
+        "ancho_util_m": 1.0,
+        "largo_min_m": 3.5,
+        "largo_max_m": 14,
+        "largo_nota": "A medida. Máximos: entre 12 y 14 m.",
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      },
+      "hiansa_panel_5g_becam": {
+        "title": "Hiansa-Panel (Trapezoidal 5G) - BECAM",
+        "url": "https://bmcuruguay.com.uy/products/hiansa-panel-trapezoidal-5g-becam",
+        "price_display": "USD 46.73 / m²",
+        "currency": "USD",
+        "unit": "m²",
+        "options": [
+          "Color"
+        ],
+        "option_values": {},
+        "ancho_util_m": 1.0,
+        "largos_disponibles_m": [
+          2.95,
+          3.95,
+          4.95,
+          5.95,
+          6.95,
+          7.95
+        ],
+        "largo_min_m": 2.95,
+        "largo_max_m": 7.95,
+        "stock_status": "unknown_public",
+        "last_verified_utc": "2026-01-15T17:52:05Z"
+      }
+    }
+  },
+  "runtime_product_refresh_instruction": {
+    "when_user_asks_about_product": "Resolver producto por handle/url/título. Si (now_utc - last_verified_utc) > ttl_seconds, refrescar con prioridad Admin API > Storefront API > HTML. Comparar tracked_fields y actualizar snapshot + registrar change_event."
+  }
+}
