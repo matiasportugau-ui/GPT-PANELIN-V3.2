@@ -27,14 +27,14 @@
 
 ## 🎯 Overview
 
-**Panelin 3.3** (BMC Assistant Pro) is an advanced AI assistant specialized in generating professional quotations for construction panel systems. This repository contains all configuration files, knowledge bases, and documentation needed to deploy and operate the GPT on OpenAI's platform.
+**Panelin 3.3** (BMC Assistant Pro) is an advanced AI assistant specialized in generating professional quotations for construction panel systems. This repository contains all configuration files, knowledge bases, documentation, automated deployment tools, and an autonomous evolution system needed to deploy and continuously improve the GPT on OpenAI's platform.
 
 ### What is Panelin?
 
 Panelin is a technical sales assistant that:
 - Generates accurate quotations with complete Bill of Materials (BOM)
 - Validates technical specifications (load-bearing capacity, thermal insulation)
-- Produces professional PDF quotations with BMC Uruguay branding
+- Produces professional PDF quotations with BMC Uruguay branding (v2.0)
 - Provides technical advisory on panel systems (ISODEC, ISOPANEL, ISOROOF, ISOWALL, ISOFRIG)
 - Evaluates and trains sales personnel based on real interactions
 - Integrates with the Panelin Wolf API for real-time pricing and availability
@@ -44,10 +44,12 @@ Panelin is a technical sales assistant that:
 ✅ **Professional Quotations**: Complete BOM with panels, accessories, fixings, and sealants  
 ✅ **Technical Validation**: Automatic load-bearing capacity verification  
 ✅ **Multi-System Support**: 6 construction systems with parametric BOM rules  
-✅ **PDF Generation**: Professional branded quotations ready for client delivery  
+✅ **PDF Generation v2.0**: Professional branded quotations with BMC styling ready for client delivery  
 ✅ **Energy Savings**: ROI calculations comparing insulation options  
 ✅ **API Integration**: Real-time product search, pricing, and availability checks  
 ✅ **Sales Training**: Evaluation and coaching based on historical interactions  
+✅ **Automated Deployment**: Validation and packaging scripts for streamlined GPT upload  
+✅ **Autonomous Evolution**: EVOLUCIONADOR system for continuous quality monitoring and improvement  
 
 ---
 
@@ -86,6 +88,18 @@ Panelin is a technical sales assistant that:
 | **Creative Engineering** | Architectural Artistry | Balance aesthetic, thermal, and structural considerations in recommendations |
 | **Creative Engineering** | Efficiency Obsession | Minimize fixation points, accessories, and waste while maintaining structural integrity |
 | **Creative Engineering** | Zero Waste Philosophy | Calculate exact quantities with optimal cutting patterns to reduce waste |
+
+### Repository Management & Quality Assurance
+
+| Category | Feature | Description |
+|----------|---------|-------------|
+| **🧬 Autonomous Evolution** | EVOLUCIONADOR System | Daily automated analysis with 7 validators and 6 optimizers for continuous improvement |
+| **📦 Deployment Tools** | Validation Scripts | Automated validation of all 17 required files before upload |
+| **📦 Deployment Tools** | Packaging Scripts | Organized phased upload with instructions for each phase |
+| **✅ Quality Monitoring** | Comprehensive Testing | Test suites for PDF generation, validators, analyzers, and optimizers |
+| **✅ Quality Monitoring** | GitHub Actions** | Daily automated workflow for evolution reports and issue creation |
+| **📊 Self-Learning** | Pattern Recognition | Tracks discovered patterns and improvement opportunities |
+| **📊 Self-Learning** | Performance Benchmarking | Historical tracking of efficiency and quality metrics |
 
 ---
 
