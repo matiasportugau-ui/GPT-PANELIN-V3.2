@@ -9,7 +9,7 @@ This is a simplified guide for quickly uploading all required files to your Open
 python validate_gpt_files.py
 ```
 
-This checks that all 17 required files exist and are valid.
+This checks that all 20 required files exist and are valid (17 core + 3 preload system).
 
 ### Step 2: Package Your Files (1 minute)
 ```bash
@@ -28,7 +28,8 @@ This creates an organized folder `GPT_Upload_Package/` with files sorted by uplo
    - `Phase_3_Validation/` → **PAUSE 2 min**
    - `Phase_4_Documentation/` → **PAUSE 2 min**
    - `Phase_5_Supporting/` → **PAUSE 2 min**
-   - `Phase_6_Assets/` → **Done!**
+   - `Phase_6_Assets/` → **PAUSE 2 min**
+   - `Phase_7_Preload_System/` → **Done!**
 
 Each phase has an `INSTRUCTIONS.txt` file with specific guidance.
 
@@ -51,6 +52,11 @@ Each phase has an `INSTRUCTIONS.txt` file with specific guidance.
 
 ### Assets (Phase 6)
 - **bmc_logo.png** - BMC Uruguay logo for PDFs
+
+### Preload System (Phase 7 - NEW in v3.3)
+- **gpt_startup_context.json** - Preload configuration
+- **panelin_preload.py** - Automatic initialization module
+- **GPT_STARTUP_VISIBILITY.md** - Preload documentation
 
 ---
 
@@ -93,6 +99,7 @@ After upload, test these queries:
 - [ ] Request complete quotation → Should include panels + accessories + fixings
 - [ ] "Genera un PDF" → Code Interpreter should activate
 - [ ] Request technical diagram → Image Generation should work
+- [ ] **First message in new conversation** → Should trigger automatic preload and show visibility report
 
 ---
 
@@ -120,11 +127,12 @@ For more detailed instructions, see:
 ## 🎯 Success Criteria
 
 Your GPT is ready when:
-- ✅ All 17 files uploaded successfully
+- ✅ All 20 files uploaded successfully (17 core + 3 preload)
 - ✅ Code Interpreter enabled
 - ✅ Knowledge base queries return correct prices
 - ✅ PDF generation works
 - ✅ Quotations include complete BOM (panels + accessories + fixings)
+- ✅ First interaction triggers automatic preload with visibility report
 
 ---
 

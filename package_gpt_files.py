@@ -63,6 +63,15 @@ UPLOAD_PHASES = {
         "files": [
             "bmc_logo.png",
         ],
+        "pause_after": "2 minutes",
+    },
+    "Phase_7_Preload_System": {
+        "description": "Preload System (NEW in v3.3)",
+        "files": [
+            "gpt_startup_context.json",
+            "panelin_preload.py",
+            "GPT_STARTUP_VISIBILITY.md",
+        ],
         "pause_after": "Complete!",
     },
 }
