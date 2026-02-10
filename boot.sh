@@ -54,9 +54,19 @@ while [[ $# -gt 0 ]]; do
       VERBOSE=1
       shift
       ;;
-    *)
-      echo "Unknown option: $1"
+    -h|--help)
       echo "Usage: $0 [--force] [--no-embeddings] [--verbose]"
+      echo ""
+      echo "Options:"
+      echo "  --force          Force re-run BOOT even if already completed"
+      echo "  --no-embeddings  Disable embedding generation"
+      echo "  --verbose        Enable verbose output"
+      echo "  -h, --help       Show this help message"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $0 [--force] [--no-embeddings] [--verbose]" >&2
       exit 1
       ;;
   esac

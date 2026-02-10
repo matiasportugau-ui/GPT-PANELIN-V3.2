@@ -27,7 +27,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -83,7 +83,7 @@ class KnowledgeIndexer:
         self.allowed_extensions = allowed_extensions or DEFAULT_ALLOWED_EXTENSIONS
         self.index: Dict = {
             'version': '1.0',
-            'generated_at': datetime.utcnow().isoformat() + 'Z',
+            'generated_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
             'root_directory': str(root_dir),
             'embeddings_enabled': bool(GENERATE_EMBEDDINGS),
             'files': []
@@ -146,7 +146,7 @@ class KnowledgeIndexer:
                 'name': file_path.name,
                 'extension': file_path.suffix.lower(),
                 'size_bytes': stat.st_size,
-                'modified_at': datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z',
+                'modified_at': datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'sha256': file_hash,
                 'valid': True
             }
