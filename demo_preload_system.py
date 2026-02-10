@@ -10,7 +10,6 @@ Run this to see what users will experience on their first message.
 """
 
 import sys
-from pathlib import Path
 from panelin_preload import auto_initialize, get_system_status
 
 
