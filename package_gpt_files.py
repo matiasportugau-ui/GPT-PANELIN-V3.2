@@ -4,7 +4,6 @@ GPT Files Packaging Script
 Creates organized directories for each upload phase to make the upload process easier.
 """
 
-import json
 import os
 import shutil
 import sys
@@ -85,6 +84,17 @@ def create_upload_package(output_dir: str = "GPT_Upload_Package"):
     os.chdir(repo_root)
 
     output_path = repo_root / output_dir
+    
+    # Security check: ensure output_path is within repo_root
+    try:
+        output_path_resolved = output_path.resolve()
+        repo_root_resolved = repo_root.resolve()
+        output_path_resolved.relative_to(repo_root_resolved)
+    except (ValueError, RuntimeError):
+        print(f"❌ Error: output directory must be within the repository root")
+        print(f"   Attempted: {output_path}")
+        print(f"   Repository root: {repo_root}")
+        return 1
     
     # Clean and create output directory
     if output_path.exists():
@@ -168,7 +178,7 @@ def create_upload_package(output_dir: str = "GPT_Upload_Package"):
         phase_instructions.append(f"4. After uploading ALL files in this phase, PAUSE for {phase_info['pause_after']}")
         phase_instructions.append("5. Then proceed to the next phase")
         
-        with open(phase_path / "INSTRUCTIONS.txt", 'w') as f:
+        with open(phase_path / "INSTRUCTIONS.txt", 'w', encoding='utf-8', newline='\n') as f:
             f.write('\n'.join(phase_instructions))
 
     # Write main README
