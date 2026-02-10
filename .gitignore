@@ -4,3 +4,33 @@
 .evolucionador/**/*.pyc
 .evolucionador/reports/history/*.md
 !.evolucionador/reports/history/.gitkeep
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# PDF output files (test artifacts)
+panelin_reports/output/*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
