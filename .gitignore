@@ -1,0 +1,6 @@
+
+# EVOLUCIONADOR
+.evolucionador/**/__pycache__/
+.evolucionador/**/*.pyc
+.evolucionador/reports/history/*.md
+!.evolucionador/reports/history/.gitkeep
