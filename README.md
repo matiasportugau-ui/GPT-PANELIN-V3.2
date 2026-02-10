@@ -15,6 +15,7 @@
 - [Knowledge Base](#knowledge-base)
 - [API Integration](#api-integration)
 - [Installation & Deployment](#installation--deployment)
+- [BOOT Integration](#boot-integration)
 - [Usage Guide](#usage-guide)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
@@ -539,6 +540,151 @@ When updating files:
 3. **Wait** 5-10 minutes for reindexing
 4. **Test** that the GPT reads the new data correctly
 5. **Verify** that Level 1 hierarchy is maintained
+
+---
+
+## 🚀 BOOT Integration
+
+### Overview
+
+The BOOT (Bootstrap, Operations, Orchestration, and Testing) process provides automated initialization and validation for the Panelin GPT system. It ensures the environment is correctly configured, dependencies are installed, and knowledge base files are indexed before use.
+
+**Key Features:**
+- ✅ **Idempotent**: Safe to run multiple times
+- ✅ **Secure**: No secrets in logs or committed files  
+- ✅ **Observable**: Comprehensive logging with timestamps
+- ✅ **Fail-Fast**: Validates environment before operations
+- ✅ **Configurable**: Works with local Python, Docker, and CI/CD
+
+### Quick Start
+
+```bash
+# First time setup - run BOOT process
+./boot.sh
+
+# Check system readiness
+test -f .boot-ready && echo "System ready" || echo "Run ./boot.sh first"
+
+# Force re-run BOOT (e.g., after updates)
+./boot.sh --force
+```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `PANELIN_ROOT` | No | Current dir | Repository root path |
+| `GENERATE_EMBEDDINGS` | No | `0` | Generate embeddings (0=no, 1=yes) |
+| `PANELIN_API_KEY` | Conditional | - | API key (only if embeddings=1) |
+| `PYTHON_BIN` | No | `python3` | Python interpreter path |
+
+### BOOT Artifacts
+
+After successful BOOT, these files are created:
+
+- **`.boot-ready`** - Readiness flag (check this before starting app)
+- **`.boot-log`** - Comprehensive log with timestamps (auto-rotates at 10MB)
+- **`knowledge_index.json`** - Metadata index of all knowledge base files
+
+⚠️ **Note:** These files are git-ignored and should not be committed.
+
+### Usage Examples
+
+**Local Development:**
+```bash
+# No embeddings (default for development)
+./boot.sh
+
+# With embeddings (requires API key)
+export GENERATE_EMBEDDINGS=1
+export PANELIN_API_KEY="your-api-key"
+./boot.sh
+```
+
+**CI/CD Pipeline:**
+```bash
+# Force fresh boot without embeddings
+GENERATE_EMBEDDINGS=0 ./boot.sh --force --no-embeddings
+```
+
+**Docker Container:**
+```bash
+# Build with BOOT integration
+docker build -f Dockerfile.boot -t panelin-gpt:boot .
+
+# Run container (BOOT runs automatically at startup)
+docker run -e GENERATE_EMBEDDINGS=0 panelin-gpt:boot
+```
+
+**Docker Compose:**
+```bash
+# Start with docker-compose
+docker-compose -f docker-compose.boot.yml up -d
+
+# View logs
+docker-compose -f docker-compose.boot.yml logs -f
+```
+
+### Validation & Testing
+
+**Run smoke tests** (safe for CI, no network calls):
+```bash
+./scripts/boot_test.sh
+```
+
+**Validate BOOT artifacts:**
+```bash
+python3 scripts/validate_boot_artifacts.py
+```
+
+**Validate in strict mode** (includes file hash verification):
+```bash
+python3 scripts/validate_boot_artifacts.py --strict
+```
+
+### Troubleshooting
+
+**Common issues and solutions:**
+
+1. **"Python not found"**
+   ```bash
+   # Install Python 3.8+
+   sudo apt-get install python3 python3-venv python3-pip
+   ```
+
+2. **"Permission denied"**
+   ```bash
+   # Make script executable
+   chmod +x boot.sh
+   ```
+
+3. **"Knowledge ingestion failed"**
+   ```bash
+   # Check for invalid JSON files
+   python3 -m json.tool knowledge_file.json
+   ```
+
+4. **View detailed logs:**
+   ```bash
+   # Last 50 lines
+   tail -50 .boot-log
+   
+   # Search for errors
+   grep ERROR .boot-log
+   ```
+
+### Architecture & Design
+
+For complete details on BOOT architecture, flow diagrams, error codes, security considerations, and integration patterns, see:
+
+📖 **[BOOT_ARCHITECTURE.md](BOOT_ARCHITECTURE.md)** - Complete BOOT documentation
+
+### Security Practices
+
+- ✅ **Never commit** `.boot-ready`, `.boot-log`, or `knowledge_index.json`
+- ✅ **Use environment variables** for API keys and secrets
+- ✅ **Validate logs** don't contain secrets: `python3 scripts/validate_boot_artifacts.py`
+- ✅ **Run with `GENERATE_EMBEDDINGS=0`** in CI/CD to avoid requiring API keys
 
 ---
 

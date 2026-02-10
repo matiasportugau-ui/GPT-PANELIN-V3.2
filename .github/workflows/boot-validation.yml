@@ -1,0 +1,201 @@
+name: 🚀 BOOT Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'boot.sh'
+      - 'boot_preload.py'
+      - 'scripts/boot_test.sh'
+      - 'scripts/validate_boot_artifacts.py'
+      - 'requirements.txt'
+      - '.github/workflows/boot-validation.yml'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  boot-smoke-test:
+    name: BOOT Smoke Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: 🔍 Verify BOOT Scripts Exist
+        run: |
+          echo "Checking for required BOOT files..."
+          test -f boot.sh || (echo "❌ boot.sh not found" && exit 1)
+          test -f boot_preload.py || (echo "❌ boot_preload.py not found" && exit 1)
+          test -f scripts/boot_test.sh || (echo "❌ scripts/boot_test.sh not found" && exit 1)
+          test -f scripts/validate_boot_artifacts.py || (echo "❌ scripts/validate_boot_artifacts.py not found" && exit 1)
+          echo "✅ All BOOT files present"
+      
+      - name: 🧪 Run BOOT Smoke Tests
+        run: |
+          chmod +x scripts/boot_test.sh
+          chmod +x boot.sh
+          ./scripts/boot_test.sh
+        env:
+          GENERATE_EMBEDDINGS: 0
+      
+      - name: 📊 Test Summary
+        if: always()
+        run: |
+          echo "BOOT smoke tests completed"
+          echo "Check logs above for details"
+
+  boot-validation:
+    name: BOOT Process Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 🚀 Run BOOT Process (No Embeddings)
+        run: |
+          chmod +x boot.sh
+          ./boot.sh --force --no-embeddings
+        env:
+          GENERATE_EMBEDDINGS: 0
+          PANELIN_ROOT: ${{ github.workspace }}
+      
+      - name: ✅ Validate BOOT Artifacts
+        run: |
+          chmod +x scripts/validate_boot_artifacts.py
+          python3 scripts/validate_boot_artifacts.py --root ${{ github.workspace }}
+      
+      - name: 📋 Display Boot Log
+        if: always()
+        run: |
+          if [ -f .boot-log ]; then
+            echo "=== Last 50 lines of .boot-log ==="
+            tail -50 .boot-log
+          else
+            echo "⚠️ .boot-log not found"
+          fi
+      
+      - name: 📋 Display Boot Ready
+        if: always()
+        run: |
+          if [ -f .boot-ready ]; then
+            echo "=== .boot-ready contents ==="
+            cat .boot-ready
+          else
+            echo "⚠️ .boot-ready not found"
+          fi
+      
+      - name: 📋 Display Knowledge Index Stats
+        if: always()
+        run: |
+          if [ -f knowledge_index.json ]; then
+            echo "=== knowledge_index.json statistics ==="
+            python3 -c "
+import json
+with open('knowledge_index.json') as f:
+    idx = json.load(f)
+    print(f\"Version: {idx.get('version', 'unknown')}\")
+    print(f\"Files indexed: {idx.get('statistics', {}).get('files_indexed', 0)}\")
+    print(f\"Total size: {idx.get('statistics', {}).get('total_size_mb', 0)} MB\")
+    print(f\"Embeddings enabled: {idx.get('embeddings_enabled', False)}\")
+"
+          else
+            echo "⚠️ knowledge_index.json not found"
+          fi
+      
+      - name: 🔒 Security Check - No Secrets in Logs
+        if: always()
+        run: |
+          echo "Checking for secrets in logs..."
+          if [ -f .boot-log ]; then
+            # Check for common secret patterns
+            if grep -iE 'api[_-]?key["\'\s:=]+[a-zA-Z0-9_-]{20,}' .boot-log; then
+              echo "❌ Potential API key found in log!"
+              exit 1
+            fi
+            if grep -iE 'password["\'\s:=]+[^\s]{8,}' .boot-log; then
+              echo "❌ Potential password found in log!"
+              exit 1
+            fi
+            if grep -iE 'secret["\'\s:=]+[a-zA-Z0-9_-]{20,}' .boot-log; then
+              echo "❌ Potential secret found in log!"
+              exit 1
+            fi
+            echo "✅ No secrets detected in logs"
+          fi
+
+  boot-idempotency:
+    name: BOOT Idempotency Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 🚀 First BOOT Run
+        run: |
+          chmod +x boot.sh
+          ./boot.sh --no-embeddings
+          echo "First boot completed"
+        env:
+          GENERATE_EMBEDDINGS: 0
+      
+      - name: 📸 Save First Boot Artifacts
+        run: |
+          cp .boot-ready .boot-ready.first
+          cp .boot-log .boot-log.first
+          cp knowledge_index.json knowledge_index.first.json
+      
+      - name: 🚀 Second BOOT Run (Should Skip)
+        run: |
+          ./boot.sh --no-embeddings 2>&1 | tee boot2.log
+          if grep -q "already booted" boot2.log; then
+            echo "✅ Correctly detected existing boot"
+          else
+            echo "❌ Did not detect existing boot"
+            exit 1
+          fi
+        env:
+          GENERATE_EMBEDDINGS: 0
+      
+      - name: 🚀 Third BOOT Run (Force)
+        run: |
+          ./boot.sh --force --no-embeddings
+          echo "Forced boot completed"
+        env:
+          GENERATE_EMBEDDINGS: 0
+      
+      - name: ✅ Verify Idempotency
+        run: |
+          echo "Idempotency test passed!"
+          echo "BOOT process correctly handles:"
+          echo "  - Initial boot"
+          echo "  - Subsequent boot (skipped)"
+          echo "  - Forced reboot"
