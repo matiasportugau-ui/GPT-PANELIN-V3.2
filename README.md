@@ -94,7 +94,7 @@ Panelin is a technical sales assistant that:
 | Category | Feature | Description |
 |----------|---------|-------------|
 | **🧬 Autonomous Evolution** | EVOLUCIONADOR System | Daily automated analysis with 7 validators and 6 optimizers for continuous improvement |
-| **📦 Deployment Tools** | Validation Scripts | Automated validation of all 17 required files before upload |
+| **📦 Deployment Tools** | Validation Scripts | Automated validation of all 21 required files before upload |
 | **📦 Deployment Tools** | Packaging Scripts | Organized phased upload with instructions for each phase |
 | **✅ Quality Monitoring** | Comprehensive Testing | Test suites for PDF generation, validators, analyzers, and optimizers |
 | **✅ Quality Monitoring** | GitHub Actions** | Daily automated workflow for evolution reports and issue creation |
@@ -184,7 +184,7 @@ GPT-PANELIN-V3.3/
 │   │       └── bmc_logo.png                     # BMC logo for PDF headers
 │
 ├── DEPLOYMENT TOOLS
-│   ├── validate_gpt_files.py                    # Validates all 17 required files
+│   ├── validate_gpt_files.py                    # Validates all 21 required files
 │   └── package_gpt_files.py                     # Organizes files for phased upload
 │
 ├── CALCULATION ENGINE
@@ -660,7 +660,7 @@ The repository includes two Python scripts to streamline deployment:
 ```bash
 python validate_gpt_files.py
 ```
-- ✅ Validates all 17 required files exist
+- ✅ Validates all 21 required files exist
 - ✅ Checks JSON syntax for all knowledge base files
 - ✅ Verifies file sizes are within expected ranges
 - ✅ Reports any missing or invalid files
@@ -1066,7 +1066,7 @@ python validate_gpt_files.py
 ```
 
 **Validation Checks:**
-- ✅ All 17 required files exist
+- ✅ All 21 required files exist
 - ✅ JSON syntax validation
 - ✅ File size within expected ranges
 - ✅ File readability and accessibility
@@ -1177,7 +1177,7 @@ When reporting issues with the GPT or KB:
 - Zero external dependencies (Python stdlib only)
 
 **3. Deployment Tools**
-- `validate_gpt_files.py` - Validates all 17 required files
+- `validate_gpt_files.py` - Validates all 21 required files
 - `package_gpt_files.py` - Organizes files for phased upload
 - Comprehensive upload guides (Quick Start, User Guide, Checklist)
 - Automated file validation with JSON syntax checking

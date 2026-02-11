@@ -23,7 +23,7 @@ We've created everything you need to successfully upload files to your GPT:
 ```bash
 python validate_gpt_files.py
 ```
-This will check that all 17 required files are present and valid.
+This will check that all 21 required files are present and valid.
 
 ### Step 2: Organize Your Files (1 minute)
 ```bash
@@ -47,7 +47,7 @@ Each phase folder has an `INSTRUCTIONS.txt` file to guide you.
 
 ## 📋 What Files Are Uploaded?
 
-**Total: 17 files (~1.1 MB)**
+**Total: 21 files (~1.1 MB)**
 
 ### Critical Files (Phase 1)
 - BMC_Base_Conocimiento_GPT-2.json - Main pricing database

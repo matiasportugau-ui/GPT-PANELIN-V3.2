@@ -9,7 +9,7 @@ This is a simplified guide for quickly uploading all required files to your Open
 python validate_gpt_files.py
 ```
 
-This checks that all 21 required files exist and are valid.
+This checks that all 21 required files exist and are valid. Some older docs may still mention 17 required files; 21 is now the canonical required count.
 
 ### Step 2: Package Your Files (1 minute)
 ```bash
