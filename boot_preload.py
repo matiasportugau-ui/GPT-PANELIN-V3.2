@@ -37,22 +37,24 @@ class PreloadError(Exception):
     pass
 
 
+def _get_timestamp() -> str:
+    """Get current UTC timestamp in ISO format"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def log_info(message: str) -> None:
     """Log info message with timestamp"""
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [INFO] {message}", flush=True)
+    print(f"[{_get_timestamp()}] [INFO] {message}", flush=True)
 
 
 def log_warn(message: str) -> None:
     """Log warning message with timestamp"""
-    timestamp = datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ") if hasattr(datetime, 'UTC') else datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [WARN] {message}", file=sys.stderr, flush=True)
+    print(f"[{_get_timestamp()}] [WARN] {message}", file=sys.stderr, flush=True)
 
 
 def log_error(message: str) -> None:
     """Log error message with timestamp"""
-    timestamp = datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ") if hasattr(datetime, 'UTC') else datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [ERROR] {message}", file=sys.stderr, flush=True)
+    print(f"[{_get_timestamp()}] [ERROR] {message}", file=sys.stderr, flush=True)
 
 
 def calculate_sha256(file_path: Path) -> str:
@@ -158,7 +160,7 @@ def create_knowledge_index() -> Dict:
     if not knowledge_dir.exists():
         log_warn(f"Knowledge directory {KNOWLEDGE_DIR} does not exist")
         return {
-            "created": datetime.utcnow().isoformat(),
+            "created": datetime.now(timezone.utc).isoformat(),
             "files": [],
             "total_files": 0,
             "total_size": 0

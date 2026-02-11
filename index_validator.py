@@ -26,22 +26,24 @@ class ValidationError(Exception):
     pass
 
 
+def _get_timestamp() -> str:
+    """Get current UTC timestamp in ISO format"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def log_info(message: str) -> None:
     """Log info message with timestamp"""
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [INFO] {message}", flush=True)
+    print(f"[{_get_timestamp()}] [INFO] {message}", flush=True)
 
 
 def log_error(message: str) -> None:
     """Log error message with timestamp"""
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [ERROR] {message}", file=sys.stderr, flush=True)
+    print(f"[{_get_timestamp()}] [ERROR] {message}", file=sys.stderr, flush=True)
 
 
 def log_success(message: str) -> None:
     """Log success message with timestamp"""
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(f"[{timestamp}] [SUCCESS] {message}", flush=True)
+    print(f"[{_get_timestamp()}] [SUCCESS] {message}", flush=True)
 
 
 def calculate_sha256(file_path: Path) -> str:
