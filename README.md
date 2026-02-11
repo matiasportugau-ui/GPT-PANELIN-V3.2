@@ -113,7 +113,7 @@ Panelin is a technical sales assistant that:
 - **Description**: BMC Assistant Pro - Specialized technical quotation assistant for panel systems (ISODEC, ISOPANEL, ISOROOF, ISOWALL, ISOFRIG) with complete BOM calculation, enhanced PDF generation (v2.0), and professional advisory. Knowledge Base v7.0 with 70+ accessories catalog and parametric rules for 6 construction systems.
 - **Instructions**: See [Instrucciones GPT.rtf](Instrucciones%20GPT.rtf) for complete system instructions
 - **Version**: 3.3 (KB v7.0, PDF Template v2.0)
-- **Last Updated**: 2026-02-10
+- **Last Updated**: 2026-02-11
 
 ### Conversation Starters
 
@@ -1219,7 +1219,7 @@ When reporting issues with the GPT or KB:
 
 ## 📜 Version History
 
-### v3.3 / KB v7.0 / PDF Template v2.0 (2026-02-10) - Current
+### v3.3 / KB v7.0 / PDF Template v2.0 (2026-02-10, Updated 2026-02-11) - Current
 
 **Major Features:**
 
@@ -1381,7 +1381,7 @@ For technical support or questions about this GPT configuration:
 **Version:** 3.3  
 **Knowledge Base Version:** 7.0  
 **PDF Template Version:** 2.0  
-**Last Updated:** 2026-02-10  
+**Last Updated:** 2026-02-11  
 **Maintained by:** BMC Uruguay Development Team  
 
 ---
