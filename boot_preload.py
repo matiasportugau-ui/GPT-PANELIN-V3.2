@@ -23,7 +23,7 @@ import json
 import hashlib
 import shutil
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
 # Configuration
@@ -39,7 +39,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 def log(level: str, message: str) -> None:
     """Log a message with timestamp and level."""
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     # Sanitize sensitive data from logs
     if "key" in message.lower() or "token" in message.lower():
         message = "*** REDACTED - contains sensitive data ***"
@@ -133,7 +133,7 @@ def copy_knowledge_files() -> List[Dict[str, Any]]:
                 "original": str(src_path.relative_to(SCRIPT_DIR).as_posix()),
                 "size": file_size,
                 "sha256": file_hash,
-                "loaded_at": datetime.utcnow().isoformat() + "Z"
+                "loaded_at": datetime.now(timezone.utc).isoformat() + "Z"
             }
             entries.append(entry)
         except Exception as e:
@@ -179,7 +179,7 @@ def generate_index(entries: List[Dict[str, Any]]) -> None:
     
     index_data = {
         "version": "1.0.0",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat() + "Z",
         "total_files": len(entries),
         "embeddings_enabled": GENERATE_EMBEDDINGS,
         "files": entries
