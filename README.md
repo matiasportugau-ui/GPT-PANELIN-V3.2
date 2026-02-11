@@ -9,6 +9,7 @@
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [How It Works](#how-it-works)
 - [Features](#features)
 - [GPT Configuration](#gpt-configuration)
 - [Repository Structure](#repository-structure)
@@ -46,6 +47,28 @@ Panelin is a technical sales assistant that:
 ✅ **Energy Savings**: ROI calculations comparing insulation options  
 ✅ **API Integration**: Real-time product search, pricing, and availability checks  
 ✅ **Sales Training**: Evaluation and coaching based on historical interactions  
+
+---
+
+## 🔄 How It Works
+
+Want to understand the complete end-to-end workflow? Read the **[📖 How It Works Guide](HOW_IT_WORKS.md)** for a comprehensive explanation of:
+
+- **5-Phase Quotation Process**: From user request to PDF delivery
+- **Architecture Components**: GPT engine, Knowledge Base hierarchy, PDF generation
+- **Technical Validation**: Structural safety and load-bearing checks
+- **Automated Calculations**: Parametric BOM formulas
+- **Example Workflows**: Real-world quotation scenarios with detailed explanations
+
+**Quick Summary:**
+```
+User Request → Identification → Technical Validation → Data Retrieval 
+    → Automated Calculations → Professional Presentation & PDF
+```
+
+The system combines **AI decision-making** with **structured calculation logic** to deliver accurate, safe, and professional quotations every time.
+
+👉 **[Read the complete guide →](HOW_IT_WORKS.md)**
 
 ---
 
@@ -698,6 +721,7 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 
 | Document | Description | Status |
 |----------|-------------|--------|
+| [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | 🔄 **Complete end-to-end system explanation** | ✅ Current |
 | [README.md](README.md) | This file - Complete project overview | ✅ Current |
 | [Instrucciones GPT.rtf](Instrucciones%20GPT.rtf) | Full GPT system instructions (v3.1) | ✅ Production |
 | [Panelin_GPT_config.json](Panelin_GPT_config.json) | Complete GPT configuration (v2.3) | ✅ Production |

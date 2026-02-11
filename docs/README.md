@@ -8,6 +8,7 @@ Welcome to the **Panelin 3.3** documentation hub! This directory serves as the c
 
 | Category | Document | Description |
 |----------|----------|-------------|
+| **Overview** | [How It Works](../HOW_IT_WORKS.md) | 🔄 **Complete end-to-end system explanation** |
 | **Getting Started** | [User Guide](../USER_GUIDE.md) | Complete guide for uploading files to your GPT |
 | **Getting Started** | [Quick Start Guide](../QUICK_START_GPT_UPLOAD.md) | Fast 3-step guide to get started |
 | **Getting Started** | [Upload Checklist](../GPT_UPLOAD_CHECKLIST.md) | Detailed checklist for GPT file uploads |
@@ -21,6 +22,12 @@ Welcome to the **Panelin 3.3** documentation hub! This directory serves as the c
 ---
 
 ## 🗂️ Documentation Categories
+
+### 🎯 System Overview
+
+**NEW!** Understand how the entire system works:
+
+1. **[How It Works](../HOW_IT_WORKS.md)** - 🔄 Complete end-to-end explanation of the Panelin quotation system, from user request to PDF delivery
 
 ### 🚀 Getting Started
 
@@ -126,10 +133,11 @@ All knowledge base files with their hierarchy level:
 
 ## 🆘 Need Help?
 
-1. Start with the **[Quick Start Guide](../QUICK_START_GPT_UPLOAD.md)** for fast setup
-2. Check the **[User Guide](../USER_GUIDE.md)** for detailed instructions
-3. Refer to **[Knowledge Base Guide](../PANELIN_KNOWLEDGE_BASE_GUIDE.md)** for data structure
-4. See **[Quotation Process](../PANELIN_QUOTATION_PROCESS.md)** for workflow details
+1. **NEW!** Read **[How It Works](../HOW_IT_WORKS.md)** to understand the complete system
+2. Start with the **[Quick Start Guide](../QUICK_START_GPT_UPLOAD.md)** for fast setup
+3. Check the **[User Guide](../USER_GUIDE.md)** for detailed instructions
+4. Refer to **[Knowledge Base Guide](../PANELIN_KNOWLEDGE_BASE_GUIDE.md)** for data structure
+5. See **[Quotation Process](../PANELIN_QUOTATION_PROCESS.md)** for workflow details
 
 ---
 
