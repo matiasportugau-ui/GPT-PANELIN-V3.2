@@ -1,0 +1,150 @@
+name: BOOT Smoke Test
+
+on:
+  pull_request:
+    paths:
+      - 'boot.sh'
+      - 'boot_preload.py'
+      - 'index_validator.py'
+      - 'knowledge_src/**'
+      - 'knowledge/**'
+      - '.github/workflows/boot-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Boot Smoke Test
+    runs-on: ubuntu-latest
+    
+    env:
+      GENERATE_EMBEDDINGS: 0  # Never generate embeddings in CI
+      PYTHONUNBUFFERED: 1
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Verify script presence
+        run: |
+          echo "Checking for required BOOT scripts..."
+          test -f boot.sh || { echo "ERROR: boot.sh not found"; exit 1; }
+          test -f boot_preload.py || { echo "ERROR: boot_preload.py not found"; exit 1; }
+          test -f index_validator.py || { echo "ERROR: index_validator.py not found"; exit 1; }
+          echo "✓ All required scripts present"
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x boot.sh boot_preload.py index_validator.py
+      
+      - name: Check script syntax
+        run: |
+          echo "Checking shell script syntax..."
+          bash -n boot.sh
+          echo "✓ boot.sh syntax OK"
+          
+          echo "Checking Python syntax..."
+          python3 -m py_compile boot_preload.py
+          python3 -m py_compile index_validator.py
+          echo "✓ Python scripts syntax OK"
+      
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            echo "Installing dependencies..."
+            python3 -m pip install --upgrade pip
+            python3 -m pip install -r requirements.txt
+          else
+            echo "No requirements.txt found, skipping dependency installation"
+          fi
+      
+      - name: Create test knowledge source
+        run: |
+          echo "Creating test knowledge source directory..."
+          mkdir -p knowledge_src
+          echo "Test knowledge file" > knowledge_src/test.txt
+          echo '{"test": "data"}' > knowledge_src/test.json
+      
+      - name: Run boot.sh (smoke test)
+        run: |
+          echo "Running boot.sh in CI mode..."
+          ./boot.sh
+          
+          echo "Checking artifacts..."
+          test -f .boot-log || { echo "ERROR: .boot-log not created"; exit 1; }
+          test -f .boot-ready || { echo "ERROR: .boot-ready not created"; exit 1; }
+          test -f knowledge_index.json || { echo "ERROR: knowledge_index.json not created"; exit 1; }
+          echo "✓ All artifacts created"
+      
+      - name: Verify no embeddings generated
+        run: |
+          echo "Verifying embeddings were not generated..."
+          if grep -q '"embeddings_enabled": true' knowledge_index.json; then
+            echo "ERROR: Embeddings were enabled in CI!"
+            exit 1
+          fi
+          echo "✓ Embeddings correctly disabled"
+      
+      - name: Run index validator
+        run: |
+          echo "Running index validator..."
+          python3 index_validator.py
+          exit_code=$?
+          
+          if [ $exit_code -eq 0 ]; then
+            echo "✓ Validation passed"
+          elif [ $exit_code -eq 1 ]; then
+            echo "⚠ Validation completed with warnings"
+            exit 0  # Don't fail CI on warnings
+          else
+            echo "✗ Validation failed critically"
+            exit 1
+          fi
+      
+      - name: Test idempotency
+        run: |
+          echo "Testing idempotent execution..."
+          ./boot.sh
+          exit_code=$?
+          
+          if [ $exit_code -eq 0 ]; then
+            echo "✓ Second run successful (idempotent)"
+          else
+            echo "✗ Second run failed"
+            exit 1
+          fi
+      
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot-logs
+          path: |
+            .boot-log
+            .boot-ready
+            knowledge_index.json
+          retention-days: 7
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## BOOT Smoke Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f .boot-log ]; then
+            echo "### Boot Log (last 20 lines)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 .boot-log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f knowledge_index.json ]; then
+            echo "### Index Summary" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            head -20 knowledge_index.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
