@@ -21,7 +21,7 @@ Compatible with: Panelin GPT v3.3, KB v7.0
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Optional, Any
 from datetime import datetime
 
 
@@ -39,7 +39,7 @@ class PanelinPreloadSystem:
         
         Args:
             root_path: Root path for knowledge base files. 
-                      If None, uses current directory.
+                      If None, uses the directory containing this module.
         """
         self.root_path = root_path or Path(__file__).parent
         self.startup_context_path = self.root_path / "gpt_startup_context.json"
@@ -114,12 +114,12 @@ class PanelinPreloadSystem:
         self.validation_results = results
         return results
     
-    def preload_critical_data(self) -> Dict[str, bool]:
+    def preload_critical_data(self) -> Dict[str, Any]:
         """
         Pre-load and cache critical knowledge base data.
         
         Returns:
-            Dictionary with status of each preload operation.
+            Dictionary with status (bool) or error messages (str) for each preload operation.
         """
         preload_status = {}
         
@@ -309,9 +309,15 @@ class PanelinPreloadSystem:
         
         result["system_info"] = context.get("system_info", {})
         
-        # Verify files
-        validation = self.verify_required_files()
-        result["file_validation"] = validation
+        # Verify files (if enabled in config)
+        preload_config = context.get("preload_config", {})
+        if preload_config.get("validate_files_on_startup", True):
+            validation = self.verify_required_files()
+            result["file_validation"] = validation
+        else:
+            validation = {}
+            result["file_validation"] = {}
+            result["validation_skipped"] = True
         
         # Count files
         total_files = 0
@@ -331,7 +337,6 @@ class PanelinPreloadSystem:
         result["critical_missing"] = critical_missing
         
         # Preload data
-        preload_config = context.get("preload_config", {})
         cache_on_startup_value = preload_config.get("cache_on_startup")
 
         # Support both boolean and list forms for cache_on_startup.
