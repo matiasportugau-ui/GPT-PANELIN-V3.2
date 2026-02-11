@@ -284,7 +284,7 @@ When evaluating any architecture decision, score it on this matrix:
 │  │  (Source of Truth)│  │  (Fast Retrieval) │  │  (Hot Data)   │  │
 │  │                  │  │                  │  │               │  │
 │  │  • KB files      │  │  • Quotation     │  │  • Pricing    │  │
-│  │  • Config        │  │    history       │  │  • Autoportan.│  │
+│  │  • Config        │  │    history       │  │  • Validation │  │
 │  │  • Analytics     │  │  • Client prefs  │  │  • BOM rules  │  │
 │  │  • Audit trail   │  │  • Similar-match │  │  • Templates  │  │
 │  │  • Changelogs    │  │    indexes       │  │  • Lookups    │  │
