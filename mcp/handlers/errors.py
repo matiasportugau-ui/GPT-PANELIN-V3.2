@@ -42,14 +42,19 @@ def _next_id(corrections: list[dict[str, Any]]) -> str:
 
 async def handle_report_error(arguments: dict[str, Any]) -> dict[str, Any]:
     """Log a KB error correction."""
-    kb_file = arguments.get("kb_file", "")
-    field = arguments.get("field", "")
-    wrong_value = arguments.get("wrong_value", "")
-    correct_value = arguments.get("correct_value", "")
+    kb_file = arguments.get("kb_file")
+    field = arguments.get("field")
+    wrong_value = arguments.get("wrong_value")
+    correct_value = arguments.get("correct_value")
     source = arguments.get("source", "user_correction")
     notes = arguments.get("notes", "")
 
-    if not kb_file or not field or not wrong_value or not correct_value:
+    if (
+        kb_file is None
+        or field is None
+        or wrong_value is None
+        or correct_value is None
+    ):
         return {"error": "kb_file, field, wrong_value, and correct_value are required"}
 
     data = _load_corrections()
