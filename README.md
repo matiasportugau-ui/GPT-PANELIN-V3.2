@@ -465,10 +465,10 @@ cd mcp
 pip install -r requirements.txt
 
 # Run with stdio transport (for local testing / OpenAI)
-python -m mcp.server
+python server.py
 
 # Run with SSE transport (for remote hosting)
-python -m mcp.server --transport sse --port 8000
+python server.py --transport sse --port 8000
 ```
 
 #### 2. MCP Integration Clients (`panelin_mcp_integration/`)
