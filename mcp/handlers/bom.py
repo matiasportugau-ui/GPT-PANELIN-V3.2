@@ -7,6 +7,7 @@ panel installation. Applies parametric rules per construction system.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,57 @@ def _resolve_system_key(family: str, core: str, usage: str) -> str | None:
     return mapping.get((family_upper, usage_lower))
 
 
+def _get_autoportancia(
+    family: str,
+    core: str,
+    thickness: int,
+    producto_ref: str | None = None,
+) -> float | None:
+    """Retrieve autoportancia (self-supporting span) from bom_rules.json.
+    
+    Returns the luz_max_m value for the given product family, core, and thickness.
+    This is used to calculate the number of supports needed.
+    
+    If ``producto_ref`` is provided, it is used directly as the lookup key into
+    ``autoportancia.tablas`` (after upper-casing). This allows callers that
+    already resolved the system (and its producto_ref) to avoid duplicating
+    mapping logic here. If ``producto_ref`` is not provided, a best-effort
+    mapping is derived from ``family`` and ``core`` for backwards compatibility.
+    """
+    rules = _load_bom_rules()
+    autoportancia_tables = rules.get("autoportancia", {}).get("tablas", {})
+
+    # Prefer explicit producto_ref when available to avoid duplicating mapping logic.
+    if producto_ref:
+        key = producto_ref.upper()
+    else:
+        # Build the key for the autoportancia table from family/core as fallback.
+        family_upper = family.upper()
+        if family_upper == "ISOROOF":
+            key = "ISOROOF_3G"
+        elif family_upper == "ISODEC":
+            key = f"ISODEC_{core.upper()}"
+        elif family_upper == "ISOPANEL":
+            key = f"ISOPANEL_{core.upper()}"
+        elif family_upper == "ISOWALL":
+            # ISOWALL typically uses PIR
+            key = "ISOWALL_PIR"
+        elif family_upper == "ISOFRIG":
+            # ISOFRIG typically uses PIR
+            key = "ISOFRIG_PIR"
+        else:
+            return None
+
+    # Normalize thickness to integer string (e.g., 80.0 -> "80")
+    # The tool schema accepts JSON numbers which may be floats
+    thickness_int = int(thickness) if thickness else 0
+    thickness_str = str(thickness_int)
+    
+    table = autoportancia_tables.get(key, {})
+    entry = table.get(thickness_str, {})
+    return entry.get("luz_max_m")
+
+
 async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
     """Execute bom_calculate tool and return BOM breakdown."""
     family = arguments.get("product_family", "")
@@ -62,6 +114,13 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
 
     if not family or not usage or not length or not width:
         return {"error": "product_family, usage, length_m, and width_m are required"}
+    
+    # Validate thickness_mm
+    if not thickness or thickness <= 0:
+        return {
+            "error": "thickness_mm is required and must be a positive number",
+            "received": thickness
+        }
 
     rules = _load_bom_rules()
     system_key = _resolve_system_key(family, core, usage)
@@ -88,14 +147,28 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
         qty_panels = max(1, int(length / panel_width_m + 0.5))
 
     area_m2 = length * width
-    n_supports = max(2, int(width) + 1)  # Minimum 2 supports
+    
+    # Calculate supports using correct formula: ROUNDUP((length_m / autoportancia) + 1)
+    # Use producto_ref from system to avoid duplicating mapping logic
+    producto_ref = system.get("producto_ref")
+    autoportancia = _get_autoportancia(family, core, thickness, producto_ref=producto_ref)
+    
+    if autoportancia and autoportancia > 0:
+        # Formula from quotation_calculator_v3.py:414-427 and bom_rules.json
+        n_supports = max(2, math.ceil((length / autoportancia) + 1))
+        support_note = f"Calculated from length ({length}m) / autoportancia ({autoportancia}m)"
+    else:
+        # Fallback if autoportancia not found
+        n_supports = max(2, math.ceil(length / 3.0) + 1)  # Conservative fallback: 3m span
+        support_note = f"Fallback estimate (autoportancia not found for {family} {core} {int(thickness)}mm)"
 
     return {
         "system": system_key,
-        "product": f"{family} {core} {thickness}mm",
+        "product": f"{family} {core} {int(thickness)}mm",
         "dimensions": {"length_m": length, "width_m": width, "area_m2": area_m2},
         "panels": {"quantity": qty_panels, "note": "Verify against useful panel width from KB"},
         "supports": n_supports,
+        "supports_note": support_note,
         "bom_rules_applied": system,
         "source": "bom_rules.json (Level 1.3) + accessories_catalog.json (Level 1.2)",
         "note": "This is a parametric estimate. Final BOM should be validated against KB formulas in BMC_Base_Conocimiento_GPT-2.json.",
