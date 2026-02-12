@@ -14,8 +14,8 @@
 - [Features](#features)
 - [GPT Configuration](#gpt-configuration)
 - [Repository Structure](#repository-structure)
-- [EVOLUCIONADOR - Autonomous Evolution Agent](#-evolucionador---autonomous-evolution-agent)
-- [MCP Server - Model Context Protocol Integration](#-mcp-server---model-context-protocol-integration)
+- [EVOLUCIONADOR - Autonomous Evolution Agent](#evolucionador---autonomous-evolution-agent)
+- [MCP Server - Model Context Protocol Integration](#mcp-server---model-context-protocol-integration)
 - [Knowledge Base](#knowledge-base)
 - [API Integration](#api-integration)
 - [Installation & Deployment](#installation--deployment)
@@ -435,7 +435,7 @@ The MCP (Model Context Protocol) Server is a new architectural component that ex
 - **Persistent tool access** without uploading large KB files to GPT context
 - **Real-time data access** via API-backed tools
 - **Session memory** through error correction logging
-- **GitHub integration** for KB version control and automated updates
+- **Planned: GitHub integration** for KB version control and automated updates (roadmap)
 
 ### MCP Server Architecture
 
@@ -456,7 +456,7 @@ A minimal MCP server built on the MCP SDK that provides four core tools:
 - Dual transport support: `stdio` (local/OpenAI Custom GPT Actions) and `sse` (remote hosting)
 - JSON tool schemas in `tools/` directory
 - Direct KB file access (no duplication in GPT context)
-- Zero-dependency handlers (uses Python stdlib + MCP SDK only)
+- Handlers use Python stdlib only; MCP server requires MCP SDK + transport deps (see `mcp/requirements.txt`)
 
 **Usage:**
 ```bash
