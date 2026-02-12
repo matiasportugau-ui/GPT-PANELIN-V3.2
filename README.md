@@ -1,6 +1,6 @@
 # Panelin 3.3 - BMC Assistant Pro GPT Configuration
 
-![Version](https://img.shields.io/badge/version-3.3-blue) ![GPT](https://img.shields.io/badge/platform-OpenAI%20GPT-green) ![KB](https://img.shields.io/badge/KB%20version-7.0-orange) ![Status](https://img.shields.io/badge/status-production-success)
+![Version](https://img.shields.io/badge/version-3.3-blue) ![GPT](https://img.shields.io/badge/platform-OpenAI%20GPT-green) ![KB](https://img.shields.io/badge/KB%20version-7.0-orange) ![Status](https://img.shields.io/badge/status-production-success) ![MCP](https://img.shields.io/badge/MCP-enabled-purple)
 
 **Complete configuration files and knowledge base for Panelin GPT - Professional quotation assistant for BMC Uruguay panel systems**
 
@@ -15,6 +15,7 @@
 - [EVOLUCIONADOR - Autonomous Evolution Agent](#-evolucionador---autonomous-evolution-agent)
 - [Knowledge Base](#knowledge-base)
 - [API Integration](#api-integration)
+- [MCP Server](#-mcp-server)
 - [Installation & Deployment](#installation--deployment)
 - [Usage Guide](#usage-guide)
 - [Documentation](#documentation)
@@ -47,6 +48,7 @@ Panelin is a technical sales assistant that:
 ✅ **PDF Generation v2.0**: Professional branded quotations with BMC styling ready for client delivery  
 ✅ **Energy Savings**: ROI calculations comparing insulation options  
 ✅ **API Integration**: Real-time product search, pricing, and availability checks  
+✅ **MCP Server**: Standards-compliant Model Context Protocol integration for AI assistants  
 ✅ **Sales Training**: Evaluation and coaching based on historical interactions  
 ✅ **Automated Deployment**: Validation and packaging scripts for streamlined GPT upload  
 ✅ **Autonomous Evolution**: EVOLUCIONADOR system for continuous quality monitoring and improvement  
@@ -189,6 +191,22 @@ GPT-PANELIN-V3.3/
 │   ├── validate_gpt_files.py                    # Dynamically discovers and validates required config files
 │   ├── package_gpt_files.py                     # Organizes files for phased upload
 │   └── test_panelin_api_connection.sh           # API smoke test script
+│
+├── MCP SERVER (Model Context Protocol)
+│   └── mcp/                                     # MCP server implementation
+│       ├── server.py                            # Main MCP server (stdio & SSE transports)
+│       ├── requirements.txt                     # MCP dependencies (mcp>=1.0.0, uvicorn, starlette)
+│       ├── config/                              # Configuration files
+│       ├── handlers/                            # Tool handler implementations
+│       │   ├── pricing.py                       # price_check tool handler
+│       │   ├── catalog.py                       # catalog_search tool handler
+│       │   ├── bom.py                           # bom_calculate tool handler
+│       │   └── errors.py                        # report_error tool handler
+│       └── tools/                               # JSON tool schemas
+│           ├── price_check.json                 # Pricing lookup schema
+│           ├── catalog_search.json              # Catalog search schema
+│           ├── bom_calculate.json               # BOM calculator schema
+│           └── report_error.json                # Error reporting schema
 │
 ├── CALCULATION ENGINE
 │   ├── quotation_calculator_v3.py               # Python calculation engine v3.1
@@ -612,6 +630,271 @@ The complete OpenAPI 3.1.0 schema is integrated into the GPT configuration. Key 
 
 ---
 
+## 🔧 MCP Server
+
+### Model Context Protocol Integration
+
+**Panelin MCP Server** provides a standards-compliant [Model Context Protocol](https://modelcontextprotocol.io) interface for integrating Panelin's quotation tools with any MCP-compatible AI assistant, including OpenAI's GPTs, Claude Desktop, and other MCP clients.
+
+**Status:** ✅ Production Ready | **Version:** 1.0.0 | **Transport:** stdio, SSE
+
+### What is MCP?
+
+The Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. Panelin's MCP server exposes four specialized tools for construction panel quotations:
+
+| Tool | Description | Use Case |
+|------|-------------|----------|
+| 🏷️ **price_check** | Product pricing lookup by SKU or search | Real-time price queries for BMC/BROMYROS products |
+| 🔍 **catalog_search** | Product catalog search with filtering | Find products by description, category, or keywords |
+| 📋 **bom_calculate** | Bill of Materials calculator | Complete BOM generation for panel installations |
+| 🐛 **report_error** | Knowledge Base error logger | Report and track KB inconsistencies |
+
+### Quick Start
+
+#### Install Dependencies
+
+```bash
+# Install MCP server dependencies from the repository root
+pip install -r mcp/requirements.txt
+```
+
+**Required packages:**
+- `mcp>=1.0.0` - Model Context Protocol SDK
+- `uvicorn>=0.30.0` - ASGI server (for SSE transport)
+- `starlette>=0.40.0` - Web framework (for SSE transport)
+- `httpx>=0.27.0` - HTTP client
+- `pydantic>=2.0.0` - Data validation
+
+#### Run with stdio Transport (Local MCP Clients)
+
+For local MCP clients like Claude Desktop:
+
+```bash
+# Run from the repository root
+python -m mcp.server
+
+# The server will communicate via standard input/output
+# Perfect for local MCP clients
+```
+
+#### Run with SSE Transport (Remote Hosting)
+
+For remote deployments and HTTP-based integrations:
+
+```bash
+# Run from the repository root
+python -m mcp.server --transport sse --port 8000
+
+# Server will be available at:
+# - SSE endpoint: http://localhost:8000/sse
+# - POST messages: http://localhost:8000/messages
+```
+
+### MCP Tools Reference
+
+#### 1. price_check
+
+**Purpose:** Look up current product pricing by SKU, family, or natural language search.
+
+**Input Schema:**
+```json
+{
+  "query": "ISODEC-100-1000",           // Required: SKU, family, or search term
+  "filter_type": "sku",                  // Optional: "sku", "family", "type", "search"
+  "thickness_mm": 100                    // Optional: filter by thickness
+}
+```
+
+**Example Usage:**
+```json
+// Search by SKU
+{
+  "query": "ISODEC-100-1000",
+  "filter_type": "sku"
+}
+
+// Search by family
+{
+  "query": "ISODEC",
+  "filter_type": "family"
+}
+
+// Free-text search
+{
+  "query": "panel aislante para techo",
+  "filter_type": "search"
+}
+```
+
+**Response:** Returns price in USD with IVA 22% included, sourced from `bromyros_pricing_master.json`.
+
+#### 2. catalog_search
+
+**Purpose:** Search the BMC product catalog for details, variants, and images.
+
+**Input Schema:**
+```json
+{
+  "query": "panel industrial",           // Required: search keywords
+  "category": "techo",                   // Optional: "techo", "pared", "camara", "accesorio", "all"
+  "limit": 5                             // Optional: max results (default: 5)
+}
+```
+
+**Example Usage:**
+```json
+{
+  "query": "isodec",
+  "category": "techo",
+  "limit": 10
+}
+```
+
+**Response:** Returns lightweight product index results. Use product ID for full details.
+
+#### 3. bom_calculate
+
+**Purpose:** Calculate complete Bill of Materials for panel installations using parametric rules.
+
+**Input Schema:**
+```json
+{
+  "product_family": "ISODEC",            // Required: panel family
+  "thickness_mm": 100,                   // Required: panel thickness
+  "core_type": "EPS",                    // Required: "EPS" or "PIR"
+  "usage": "techo",                      // Required: "techo", "pared", "camara"
+  "length_m": 12.0,                      // Required: installation length
+  "width_m": 6.0,                        // Required: installation width/span
+  "quantity_panels": 10                  // Optional: if known
+}
+```
+
+**Example Usage:**
+```json
+{
+  "product_family": "ISODEC",
+  "thickness_mm": 100,
+  "core_type": "EPS",
+  "usage": "techo",
+  "length_m": 12.0,
+  "width_m": 6.0
+}
+```
+
+**Response:** Returns complete BOM with:
+- Panel quantities
+- Fixation requirements (screws, washers, turtles)
+- Accessories (gutters, flashing, sealants)
+- Load-bearing validation results
+- Quantity calculations and subtotals
+
+**Data Source:** Uses parametric rules from `bom_rules.json` with unified load-bearing capacity tables.
+
+#### 4. report_error
+
+**Purpose:** Log Knowledge Base errors for tracking and correction.
+
+**Input Schema:**
+```json
+{
+  "kb_file": "accessories_catalog.json", // Required: KB file name
+  "field": "items[32].price_usd",        // Required: JSON path to field
+  "wrong_value": "45.00",                // Required: incorrect value found
+  "correct_value": "47.50",              // Required: correct value
+  "source": "user_correction",           // Required: discovery source
+  "notes": "Verified with supplier"      // Optional: additional context
+}
+```
+
+**Source options:**
+- `user_correction` - Reported by end user
+- `validation_check` - Found by automated validation
+- `audit` - Discovered during manual audit
+- `web_verification` - Verified against external source
+
+**Response:** Persists error to `corrections_log.json` for tracking and potential future automation (e.g., generating GitHub PRs via external tools; not implemented in this repository).
+
+### Integration Paths
+
+There are two distinct integration paths in this project:
+
+#### 1. MCP-compatible Clients (Model Context Protocol)
+
+**For local MCP clients (e.g., Claude Desktop, IDE extensions):**
+
+- Run the MCP server using the stdio transport (default): `python -m mcp.server` from repo root
+- Point your MCP client at the server executable
+- The client will discover available tools from the MCP protocol
+
+**For remote MCP clients:**
+
+- Run with SSE transport: `python -m mcp.server --transport sse --port 8000` from repo root
+- Configure your MCP client to connect to the SSE endpoint
+- Tools will be available via the MCP protocol over HTTP
+
+**MCP tool schemas are available at:**
+- `mcp/tools/price_check.json`
+- `mcp/tools/catalog_search.json`
+- `mcp/tools/bom_calculate.json`
+- `mcp/tools/report_error.json`
+
+These JSON files describe MCP tools and are consumed by MCP-aware clients, not directly by OpenAI Custom GPT Actions.
+
+#### 2. OpenAI Custom GPT Actions (HTTP / OpenAPI-based)
+
+**Note:** OpenAI Custom GPT Actions use HTTP endpoints defined by OpenAPI schemas, which is a different integration approach than MCP.
+
+To integrate with OpenAI Custom GPT Actions:
+
+1. Deploy the SSE transport server: `python -m mcp.server --transport sse --port 8000` from repo root
+2. Implement HTTP API wrappers that expose the MCP tools as REST endpoints
+3. Generate an OpenAPI specification for those HTTP endpoints
+4. In the OpenAI GPT Builder, create a new Action and import the OpenAPI specification
+5. Configure any required authentication for your deployed HTTP endpoint
+
+The MCP server's stdio transport cannot be used directly with OpenAI Custom GPT Actions, as Actions require HTTP endpoints accessible over the internet.
+
+### Architecture
+
+```
+mcp/
+├── server.py              # Main MCP server implementation
+├── requirements.txt       # Python dependencies
+├── config/                # Configuration files
+├── handlers/              # Tool handler implementations
+│   ├── pricing.py        # price_check handler
+│   ├── catalog.py        # catalog_search handler
+│   ├── bom.py            # bom_calculate handler
+│   └── errors.py         # report_error handler
+└── tools/                 # JSON tool schemas
+    ├── price_check.json
+    ├── catalog_search.json
+    ├── bom_calculate.json
+    └── report_error.json
+```
+
+### Additional Resources
+
+- **Quick Start Guide:** [MCP_QUICK_START.md](MCP_QUICK_START.md) - Get the server running in 3 steps
+- **Usage Examples:** [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) - Practical examples for each tool
+- **MCP Specification:** [modelcontextprotocol.io](https://modelcontextprotocol.io)
+- **Comparative Analysis:** [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md)
+- **Migration Guide:** [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md)
+- **Architecture Audit:** [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md)
+
+### Benefits of MCP Integration
+
+| Benefit | Impact |
+|---------|--------|
+| **Reduced Token Usage** | 77% reduction in tokens/session (149K → 34K) |
+| **Real-time Data** | Dynamic pricing and catalog queries instead of static KB |
+| **Error Tracking** | Persistent logging of KB inconsistencies |
+| **Standard Protocol** | Works with any MCP-compatible AI assistant |
+| **Scalability** | External data sources don't consume GPT context window |
+| **Version Control** | KB updates via GitHub without GPT redeployment |
+
+---
+
 ## 🚀 Installation & Deployment
 
 ### Quick Start
@@ -999,6 +1282,16 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | [USER_GUIDE.md](USER_GUIDE.md) | User-friendly upload walkthrough | Non-technical users |
 | [GPT_UPLOAD_CHECKLIST.md](GPT_UPLOAD_CHECKLIST.md) | Comprehensive deployment checklist | Thorough deployers |
 | [GPT_UPLOAD_IMPLEMENTATION_SUMMARY.md](GPT_UPLOAD_IMPLEMENTATION_SUMMARY.md) | Technical implementation details | Developers |
+
+### MCP Server Documentation
+
+| Document | Description | Purpose |
+|----------|-------------|---------|
+| [MCP_QUICK_START.md](MCP_QUICK_START.md) | Get MCP server running in 3 steps | Quick deployment |
+| [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) | Practical examples for all 4 tools | Learning & testing |
+| [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md) | Analysis of 10 MCP server options | Architecture decisions |
+| [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md) | KB migration to MCP architecture | Migration planning |
+| [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md) | KB optimization audit | Token reduction strategy |
 
 ### Implementation & Version Documentation
 
