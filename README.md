@@ -852,6 +852,8 @@ mcp/
 
 ### Additional Resources
 
+- **Quick Start Guide:** [MCP_QUICK_START.md](MCP_QUICK_START.md) - Get the server running in 3 steps
+- **Usage Examples:** [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) - Practical examples for each tool
 - **MCP Specification:** [modelcontextprotocol.io](https://modelcontextprotocol.io)
 - **Comparative Analysis:** [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md)
 - **Migration Guide:** [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md)
@@ -1257,6 +1259,16 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | [USER_GUIDE.md](USER_GUIDE.md) | User-friendly upload walkthrough | Non-technical users |
 | [GPT_UPLOAD_CHECKLIST.md](GPT_UPLOAD_CHECKLIST.md) | Comprehensive deployment checklist | Thorough deployers |
 | [GPT_UPLOAD_IMPLEMENTATION_SUMMARY.md](GPT_UPLOAD_IMPLEMENTATION_SUMMARY.md) | Technical implementation details | Developers |
+
+### MCP Server Documentation
+
+| Document | Description | Purpose |
+|----------|-------------|---------|
+| [MCP_QUICK_START.md](MCP_QUICK_START.md) | Get MCP server running in 3 steps | Quick deployment |
+| [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) | Practical examples for all 4 tools | Learning & testing |
+| [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md) | Analysis of 10 MCP server options | Architecture decisions |
+| [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md) | KB migration to MCP architecture | Migration planning |
+| [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md) | KB optimization audit | Token reduction strategy |
 
 ### Implementation & Version Documentation
 
