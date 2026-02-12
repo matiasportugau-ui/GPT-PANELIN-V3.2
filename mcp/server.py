@@ -33,10 +33,10 @@ try:
 except ImportError:
     HAS_MCP_SDK = False
 
-from handlers.pricing import handle_price_check
-from handlers.catalog import handle_catalog_search
-from handlers.bom import handle_bom_calculate
-from handlers.errors import handle_report_error
+from .handlers.pricing import handle_price_check
+from .handlers.catalog import handle_catalog_search
+from .handlers.bom import handle_bom_calculate
+from .handlers.errors import handle_report_error
 
 TOOLS_DIR = Path(__file__).parent / "tools"
 
