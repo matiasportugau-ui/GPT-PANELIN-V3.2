@@ -134,8 +134,10 @@ Define JSON schemas for the 4 priority MCP tools. These are the contracts that O
 
 **Files to create:**
 
+> **Note:** The MCP server has been implemented. The directory is now `panelin_mcp_server/` (renamed from `mcp/` to avoid module shadowing).
+
 ```
-mcp/
+panelin_mcp_server/
 ├── server.py                    # FastAPI/Starlette MCP server (stdio + SSE)
 ├── tools/
 │   ├── price_check.json         # Tool schema
@@ -444,8 +446,8 @@ Scored using the MCP Architect's 5-criterion framework:
 
 | # | Action | Quality | Cost Eff. | Effort | Maint. | Synergy | **Score** | Phase |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Create `mcp/tools/` schemas (4 tools) | 9 | 8 | 9 | 9 | 10 | **9.0** | TODAY |
-| 2 | Create MCP server skeleton (`mcp/server.py`) | 9 | 8 | 7 | 7 | 10 | **8.3** | TODAY |
+| 1 | Create `panelin_mcp_server/tools/` schemas (4 tools) | 9 | 8 | 9 | 9 | 10 | **9.0** | ✅ DONE |
+| 2 | Create MCP server skeleton (`panelin_mcp_server/server.py`) | 9 | 8 | 7 | 7 | 10 | **8.3** | ✅ DONE |
 | 3 | Create `llms.txt` for GitMCP | 8 | 9 | 10 | 10 | 7 | **8.6** | TODAY |
 | 4 | Build lightweight Shopify index | 8 | 9 | 8 | 9 | 7 | **8.3** | TODAY |
 | 5 | Add KB JSON schema validation CI | 9 | 7 | 7 | 6 | 8 | **7.7** | THIS WEEK |
@@ -463,17 +465,19 @@ Scored using the MCP Architect's 5-criterion framework:
 
 ### Created with this plan:
 
+> **Update:** MCP server has been implemented. Directory renamed to `panelin_mcp_server/` to avoid module shadowing.
+
 - [x] **This document** — `MCP_CROSSCHECK_EVOLUTION_PLAN.md`
-- [ ] `mcp/` directory structure
-- [ ] `mcp/tools/price_check.json` — Tool schema
-- [ ] `mcp/tools/catalog_search.json` — Tool schema
-- [ ] `mcp/tools/bom_calculate.json` — Tool schema
-- [ ] `mcp/tools/report_error.json` — Tool schema
-- [ ] `mcp/config/mcp_server_config.json` — Server manifest
-- [ ] `mcp/server.py` — MCP server skeleton
-- [ ] `mcp/handlers/` — Tool handler stubs
-- [ ] `llms.txt` — GitMCP compatibility manifest
-- [ ] `mcp/requirements.txt` — MCP dependencies
+- [x] `panelin_mcp_server/` directory structure (renamed from `mcp/`)
+- [x] `panelin_mcp_server/tools/price_check.json` — Tool schema
+- [x] `panelin_mcp_server/tools/catalog_search.json` — Tool schema
+- [x] `panelin_mcp_server/tools/bom_calculate.json` — Tool schema
+- [x] `panelin_mcp_server/tools/report_error.json` — Tool schema
+- [x] `panelin_mcp_server/config/` — Configuration directory
+- [x] `panelin_mcp_server/server.py` — MCP server implementation
+- [x] `panelin_mcp_server/handlers/` — Tool handler implementations
+- [x] `llms.txt` — GitMCP compatibility manifest
+- [x] `panelin_mcp_server/requirements.txt` — MCP dependencies
 
 ### Deferred to next session:
 

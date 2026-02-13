@@ -253,7 +253,7 @@ GPT-PANELIN-V3.2/
 │       ├── PANELIN_QUOTATION_PROCESS.md           (L4, operational)
 │       └── panelin_context_consolidacion_sin_backend.md  (L4, SOP)
 │
-├── mcp/                             ← NEW: MCP tool definitions
+├── panelin_mcp_server/              ← NEW: MCP tool definitions
 │   ├── tools/
 │   │   ├── price_check.json          (tool schema)
 │   │   ├── catalog_search.json       (tool schema)
@@ -410,7 +410,7 @@ GPT-PANELIN-V3.2/
 | **KB Updates** | Manual re-upload 21 files | GitHub commit → auto-sync | Upload guides obsolete |
 | **Error Correction** | Dies with session | Persisted via GitHub MCP | New capability needed |
 | **Documentation in KB** | README + guides loaded | Guides in tools, README excluded | 10K tokens savings |
-| **File Organization** | Flat root directory | Structured `kb/` + `mcp/` + `archive/` | Restructure needed |
+| **File Organization** | Flat root directory | Structured `kb/` + `panelin_mcp_server/` + `archive/` | Restructure needed |
 | **Quotation History** | None | Qdrant MCP persistence | New capability needed |
 | **Cost Monitoring** | None | MCP analytics + GitHub logs | New capability needed |
 

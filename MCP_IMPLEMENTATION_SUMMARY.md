@@ -57,13 +57,13 @@ The MCP server provides **4 specialized tools** for construction panel quotation
 1. **Install dependencies:**
    ```bash
    # From the repository root
-   pip install -r mcp/requirements.txt
+   pip install -r panelin_mcp_server/requirements.txt
    ```
 
 2. **Start the server:**
    ```bash
    # From the repository root
-   python -m mcp.server
+   python -m panelin_mcp_server.server
    ```
 
 3. **Integrate with your AI assistant:**
@@ -76,7 +76,7 @@ The MCP server provides **4 specialized tools** for construction panel quotation
 - **stdio transport** (default): For local MCP clients (no HTTP endpoints)
 - **SSE transport** (optional): For remote hosting and HTTP-based integrations with `--transport sse --port 8000`
 
-**Important:** Always run the server from the repository root, not from inside the `mcp/` directory, to ensure the local package is used.
+**Important:** Always run the server from the repository root, not from inside the `panelin_mcp_server/` directory, to ensure the local package is used.
 
 ---
 
@@ -104,10 +104,10 @@ The MCP server provides **4 specialized tools** for construction panel quotation
 - `MCP_IMPLEMENTATION_SUMMARY.md` - This summary document
 
 ### Existing (Documented)
-- `mcp/server.py` - Main MCP server implementation
-- `mcp/requirements.txt` - Dependencies
-- `mcp/handlers/*.py` - Tool handlers (pricing, catalog, bom, errors)
-- `mcp/tools/*.json` - JSON tool schemas
+- `panelin_mcp_server/server.py` - Main MCP server implementation
+- `panelin_mcp_server/requirements.txt` - Dependencies
+- `panelin_mcp_server/handlers/*.py` - Tool handlers (pricing, catalog, bom, errors)
+- `panelin_mcp_server/tools/*.json` - JSON tool schemas
 
 ---
 
@@ -166,8 +166,8 @@ The MCP server implementation is:
 1. **Test the server:**
    ```bash
    # From the repository root
-   pip install -r mcp/requirements.txt
-   python -m mcp.server
+   pip install -r panelin_mcp_server/requirements.txt
+   python -m panelin_mcp_server.server
    ```
 
 2. **Integrate with MCP clients:**

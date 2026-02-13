@@ -21,7 +21,7 @@
 - [KB Audit](KB_ARCHITECTURE_AUDIT.md): KB architecture audit for MCP migration
 
 ## MCP Tools
-- [price_check](mcp/tools/price_check.json): Product pricing lookup by SKU/family/type
-- [catalog_search](mcp/tools/catalog_search.json): Product catalog search with category filters
-- [bom_calculate](mcp/tools/bom_calculate.json): Parametric Bill of Materials calculator
-- [report_error](mcp/tools/report_error.json): KB error correction logger
+- [price_check](panelin_mcp_server/tools/price_check.json): Product pricing lookup by SKU/family/type
+- [catalog_search](panelin_mcp_server/tools/catalog_search.json): Product catalog search with category filters
+- [bom_calculate](panelin_mcp_server/tools/bom_calculate.json): Parametric Bill of Materials calculator
+- [report_error](panelin_mcp_server/tools/report_error.json): KB error correction logger
