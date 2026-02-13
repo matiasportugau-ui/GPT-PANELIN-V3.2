@@ -390,4 +390,4 @@ This document provides practical examples for using each of the four MCP tools e
 **For more information, see:**
 - [MCP Server Documentation](README.md#-mcp-server)
 - [MCP Quick Start Guide](MCP_QUICK_START.md)
-- [Tool Schemas](mcp/tools/)
+- [Tool Schemas](panelin_mcp_server/tools/)

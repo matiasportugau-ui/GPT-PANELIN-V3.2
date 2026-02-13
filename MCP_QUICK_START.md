@@ -10,7 +10,7 @@
 
 ```bash
 # From the repository root
-pip install -r mcp/requirements.txt
+pip install -r panelin_mcp_server/requirements.txt
 ```
 
 This installs:
@@ -22,18 +22,18 @@ This installs:
 
 ### Step 2: Start the Server
 
-**Important:** Run the server from the repository root (not from inside the `mcp/` directory) to ensure the local package is used.
+**Important:** Run the server from the repository root (not from inside the `panelin_mcp_server/` directory) to ensure the local package is used.
 
 **For local testing (stdio transport):**
 ```bash
 # From the repository root
-python -m mcp.server
+python -m panelin_mcp_server.server
 ```
 
 **For remote hosting (SSE transport):**
 ```bash
 # From the repository root
-python -m mcp.server --transport sse --port 8000
+python -m panelin_mcp_server.server --transport sse --port 8000
 ```
 
 ### Step 3: Test the Connection
@@ -74,21 +74,21 @@ There are two distinct integration paths in this project:
 
 **For local MCP clients (Claude Desktop, IDE extensions, etc.):**
 
-1. Start server with stdio transport: `python -m mcp.server` (from repo root)
+1. Start server with stdio transport: `python -m panelin_mcp_server.server` (from repo root)
 2. Configure your MCP client to point to the server executable
 3. The client will discover available tools from the MCP protocol
 
 **For remote MCP clients:**
 
-1. Start server with SSE transport: `python -m mcp.server --transport sse --port 8000`
+1. Start server with SSE transport: `python -m panelin_mcp_server.server --transport sse --port 8000`
 2. Configure your MCP client to connect to the SSE endpoint
 3. Tools will be available via the MCP protocol over HTTP
 
 **MCP tool schemas are available at:**
-- `mcp/tools/price_check.json`
-- `mcp/tools/catalog_search.json`
-- `mcp/tools/bom_calculate.json`
-- `mcp/tools/report_error.json`
+- `panelin_mcp_server/tools/price_check.json`
+- `panelin_mcp_server/tools/catalog_search.json`
+- `panelin_mcp_server/tools/bom_calculate.json`
+- `panelin_mcp_server/tools/report_error.json`
 
 These JSON files describe MCP tools and are consumed by MCP-aware clients.
 
@@ -98,7 +98,7 @@ These JSON files describe MCP tools and are consumed by MCP-aware clients.
 
 To integrate with OpenAI Custom GPT Actions:
 
-1. Deploy the SSE transport server: `python -m mcp.server --transport sse --port 8000`
+1. Deploy the SSE transport server: `python -m panelin_mcp_server.server --transport sse --port 8000`
 2. Create HTTP endpoint wrappers that expose the MCP tools as REST APIs
 3. Generate an OpenAPI schema for those HTTP endpoints
 4. In OpenAI GPT Builder, import the OpenAPI specification
@@ -123,10 +123,10 @@ The MCP server's stdio transport cannot be used directly with OpenAI Custom GPT 
 ## 🆘 Troubleshooting
 
 **Issue: "Module 'mcp' not found"**
-- Solution: Run `pip install -r requirements.txt` from the `mcp/` directory
+- Solution: Run `pip install -r requirements.txt` from the `panelin_mcp_server/` directory
 
 **Issue: "Port 8000 already in use"**
-- Solution: Use a different port: `python -m mcp.server --transport sse --port 8001`
+- Solution: Use a different port: `python -m panelin_mcp_server.server --transport sse --port 8001`
 
 **Issue: "Cannot connect to stdio server"**
 - Solution: Ensure your MCP client is configured for stdio transport, not SSE
@@ -139,7 +139,7 @@ The MCP server's stdio transport cannot be used directly with OpenAI Custom GPT 
 ## 📚 Next Steps
 
 - Read the full [MCP Server Documentation](README.md#-mcp-server)
-- Review [Tool Schemas](mcp/tools/)
+- Review [Tool Schemas](panelin_mcp_server/tools/)
 - Check [MCP Comparative Analysis](MCP_SERVER_COMPARATIVE_ANALYSIS.md)
 - See [KB Architecture Audit](KB_ARCHITECTURE_AUDIT.md) for optimization details
 

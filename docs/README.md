@@ -75,7 +75,7 @@ Market research and comparative analysis for MCP server integration:
 4. **[KB Architecture Audit](../KB_ARCHITECTURE_AUDIT.md)** - Critical review of all KB files with MCP migration analysis
 5. **[KB MCP Migration Prompt](../KB_MCP_MIGRATION_PROMPT.md)** - Executable prompt and results for KB restructuring
 6. **[MCP Cross-Check & Evolution Plan](../MCP_CROSSCHECK_EVOLUTION_PLAN.md)** - Full cross-check analysis, gap audit, corrected cost projections, and fast-track execution plan
-7. **[MCP Server](../mcp/)** - MCP server skeleton with tool schemas, handlers, and config
+7. **[MCP Server](../panelin_mcp_server/)** - MCP server skeleton with tool schemas, handlers, and config
 
 ### 📦 Archived Documents
 

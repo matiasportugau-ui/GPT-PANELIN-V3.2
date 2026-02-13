@@ -655,7 +655,7 @@ The Model Context Protocol (MCP) is an open standard for connecting AI assistant
 
 ```bash
 # Install MCP server dependencies from the repository root
-pip install -r mcp/requirements.txt
+pip install -r panelin_mcp_server/requirements.txt
 ```
 
 **Required packages:**
@@ -671,7 +671,7 @@ For local MCP clients like Claude Desktop:
 
 ```bash
 # Run from the repository root
-python -m mcp.server
+python -m panelin_mcp_server.server
 
 # The server will communicate via standard input/output
 # Perfect for local MCP clients
@@ -683,7 +683,7 @@ For remote deployments and HTTP-based integrations:
 
 ```bash
 # Run from the repository root
-python -m mcp.server --transport sse --port 8000
+python -m panelin_mcp_server.server --transport sse --port 8000
 
 # Server will be available at:
 # - SSE endpoint: http://localhost:8000/sse
@@ -822,13 +822,13 @@ There are two distinct integration paths in this project:
 
 **For local MCP clients (e.g., Claude Desktop, IDE extensions):**
 
-- Run the MCP server using the stdio transport (default): `python -m mcp.server` from repo root
+- Run the MCP server using the stdio transport (default): `python -m panelin_mcp_server.server` from repo root
 - Point your MCP client at the server executable
 - The client will discover available tools from the MCP protocol
 
 **For remote MCP clients:**
 
-- Run with SSE transport: `python -m mcp.server --transport sse --port 8000` from repo root
+- Run with SSE transport: `python -m panelin_mcp_server.server --transport sse --port 8000` from repo root
 - Configure your MCP client to connect to the SSE endpoint
 - Tools will be available via the MCP protocol over HTTP
 
@@ -846,7 +846,7 @@ These JSON files describe MCP tools and are consumed by MCP-aware clients, not d
 
 To integrate with OpenAI Custom GPT Actions:
 
-1. Deploy the SSE transport server: `python -m mcp.server --transport sse --port 8000` from repo root
+1. Deploy the SSE transport server: `python -m panelin_mcp_server.server --transport sse --port 8000` from repo root
 2. Implement HTTP API wrappers that expose the MCP tools as REST endpoints
 3. Generate an OpenAPI specification for those HTTP endpoints
 4. In the OpenAI GPT Builder, create a new Action and import the OpenAPI specification
@@ -857,7 +857,7 @@ The MCP server's stdio transport cannot be used directly with OpenAI Custom GPT 
 ### Architecture
 
 ```
-mcp/
+panelin_mcp_server/
 ├── server.py              # Main MCP server implementation
 ├── requirements.txt       # Python dependencies
 ├── config/                # Configuration files
