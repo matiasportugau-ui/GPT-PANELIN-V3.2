@@ -34,13 +34,13 @@ class TestPriceCheckHandler:
             assert "matches" in result
             assert isinstance(result["matches"], list)
             assert len(result["matches"]) > 0
-            
+
             # Check match structure
             match = result["matches"][0]
             assert "sku" in match
             assert "description" in match
             assert "price_usd_iva_inc" in match
-            
+
         asyncio.run(run())
 
     def test_error_response_structure(self):
@@ -54,7 +54,7 @@ class TestPriceCheckHandler:
             assert "code" in result["error"]
             assert "message" in result["error"]
             assert result["error"]["code"] in ["SKU_NOT_FOUND", "INVALID_FILTER", "INVALID_THICKNESS", "INTERNAL_ERROR"]
-            
+
         asyncio.run(run())
 
 
@@ -73,7 +73,7 @@ class TestCatalogSearchHandler:
             assert result["contract_version"] == "v1"
             assert "results" in result
             assert isinstance(result["results"], list)
-            
+
         asyncio.run(run())
 
     def test_error_response_structure(self):
@@ -86,7 +86,7 @@ class TestCatalogSearchHandler:
             assert "error" in result
             assert "code" in result["error"]
             assert "message" in result["error"]
-            
+
         asyncio.run(run())
 
 
@@ -109,7 +109,7 @@ class TestBOMCalculateHandler:
             assert result["contract_version"] == "v1"
             assert "items" in result
             assert "summary" in result
-            
+
         asyncio.run(run())
 
     def test_error_response_structure(self):
@@ -129,7 +129,7 @@ class TestBOMCalculateHandler:
             assert "error" in result
             assert "code" in result["error"]
             assert "message" in result["error"]
-            
+
         asyncio.run(run())
 
 
