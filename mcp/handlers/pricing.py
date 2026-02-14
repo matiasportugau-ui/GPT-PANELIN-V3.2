@@ -31,6 +31,25 @@ def _normalize(text: str) -> str:
     return text.lower().strip().replace("-", "").replace("_", "").replace(" ", "")
 
 
+def _extract_product_fields(product: dict[str, Any]) -> tuple[str, str, str, str]:
+    """Extract common product fields with fallbacks."""
+    sku = str(product.get("sku", product.get("SKU", product.get("codigo", ""))))
+    family = str(product.get("familia", product.get("family", product.get("_key", ""))))
+    ptype = str(product.get("tipo", product.get("type", "")))
+    name = str(product.get("nombre", product.get("name", product.get("title", ""))))
+    return sku, family, ptype, name
+
+
+def _extract_thickness(product: dict[str, Any]) -> float | None:
+    """Extract thickness from product specifications or top-level fields."""
+    specs = product.get("specifications", {})
+    if isinstance(specs, dict):
+        thickness = specs.get("thickness_mm")
+        if thickness is not None:
+            return thickness
+    return product.get("espesor_mm", product.get("thickness", product.get("espesor")))
+
+
 def _search_products(data: dict[str, Any] | list[Any], query: str, filter_type: str = "search",
                      thickness_mm: float | None = None) -> list[dict[str, Any]]:
     """Search pricing data for matching products."""
@@ -61,19 +80,8 @@ def _search_products(data: dict[str, Any] | list[Any], query: str, filter_type: 
             continue
 
         match = False
-        sku = str(product.get("sku", product.get("SKU", product.get("codigo", ""))))
-        family = str(product.get("familia", product.get("family", product.get("_key", ""))))
-        ptype = str(product.get("tipo", product.get("type", "")))
-        name = str(product.get("nombre", product.get("name", product.get("title", ""))))
-        
-        # Extract thickness from specifications or top-level
-        specs = product.get("specifications", {})
-        if isinstance(specs, dict):
-            thickness = specs.get("thickness_mm")
-        else:
-            thickness = None
-        if thickness is None:
-            thickness = product.get("espesor_mm", product.get("thickness", product.get("espesor")))
+        sku, family, ptype, name = _extract_product_fields(product)
+        thickness = _extract_thickness(product)
 
         if filter_type == "sku" and norm_query in _normalize(sku):
             match = True
@@ -167,23 +175,14 @@ async def handle_price_check(arguments: dict[str, Any]) -> dict[str, Any]:
         # Transform results to match contract schema
         matches = []
         for product in results[:20]:  # Cap at 20 results
-            sku = str(product.get("sku", product.get("SKU", product.get("codigo", ""))))
-            name = str(product.get("nombre", product.get("name", product.get("title", ""))))
-            family = str(product.get("familia", product.get("family", "")))
-            ptype = str(product.get("tipo", product.get("type", "")))
+            sku, family, ptype, name = _extract_product_fields(product)
             
             # Build description from available fields
             desc_parts = [p for p in [family, ptype, name] if p]
             description = " - ".join(desc_parts) if desc_parts else sku
             
-            # Extract thickness from specifications or top-level
-            specs = product.get("specifications", {})
-            if isinstance(specs, dict):
-                thickness = specs.get("thickness_mm")
-            else:
-                thickness = None
-            if thickness is None:
-                thickness = product.get("espesor_mm", product.get("thickness", product.get("espesor")))
+            # Extract thickness
+            thickness = _extract_thickness(product)
             
             # Extract price - try multiple paths in pricing data
             price = None
