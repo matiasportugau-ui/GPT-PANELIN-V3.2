@@ -66,7 +66,9 @@ async def handle_quotation_store(arguments: dict[str, Any]) -> dict[str, Any]:
     similar: list[dict[str, Any]] = []
     if include_similar and _enable_vector_retrieval:
         try:
-            similar = await _memory_store.retrieve_similar(normalized_embedding, limit)
+            # Clamp limit to valid range (schema defines 1-10)
+            clamped_limit = max(1, min(limit, 10))
+            similar = await _memory_store.retrieve_similar(normalized_embedding, clamped_limit)
         except Exception as e:
             # Non-fatal: return stored quotation even if retrieval fails
             return {

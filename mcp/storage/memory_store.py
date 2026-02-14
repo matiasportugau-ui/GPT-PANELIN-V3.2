@@ -101,14 +101,18 @@ class QdrantStore:
     def _get_sync_client(self) -> httpx.Client:
         """Get or create synchronous client for startup healthchecks."""
         if self._sync_client is None:
-            headers = {"Api-Key": self._api_key} if self._api_key else {}
+            headers = {}
+            if self._api_key is not None and self._api_key != "":
+                headers["Api-Key"] = self._api_key
             self._sync_client = httpx.Client(headers=headers, timeout=self.timeout_seconds)
         return self._sync_client
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create async HTTP client."""
         if self._client is None:
-            headers = {"Api-Key": self._api_key} if self._api_key else {}
+            headers = {}
+            if self._api_key is not None and self._api_key != "":
+                headers["Api-Key"] = self._api_key
             self._client = httpx.AsyncClient(headers=headers, timeout=self.timeout_seconds)
         return self._client
 

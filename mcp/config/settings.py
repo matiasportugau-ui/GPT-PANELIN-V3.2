@@ -47,6 +47,12 @@ def load_runtime_settings() -> RuntimeSettings:
         with open(CONFIG_FILE, encoding="utf-8") as f:
             config = json.load(f)
     except FileNotFoundError:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Configuration file not found at {CONFIG_FILE}. Using default settings. "
+            "Create mcp/config/mcp_server_config.json to customize configuration."
+        )
         config = {}
 
     flags = config.get("feature_flags", {})
