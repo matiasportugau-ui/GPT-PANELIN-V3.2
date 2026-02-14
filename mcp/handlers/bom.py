@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from mcp_tools.contracts import CONTRACT_VERSION, BOM_CALCULATE_ERROR_CODES
+from mcp.handlers.pricing import handle_price_check
 
 logger = logging.getLogger(__name__)
 
@@ -240,9 +241,6 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         # Try to fetch price for panels using pricing handler
         panel_unit_price = 0.0
         panel_sku = sku_candidates[0]  # Default to first format
-        
-        # Import pricing handler to look up prices
-        from mcp.handlers.pricing import handle_price_check
         
         # Try each SKU candidate
         for sku_candidate in sku_candidates:
