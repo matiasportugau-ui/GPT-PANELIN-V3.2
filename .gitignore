@@ -20,6 +20,9 @@ ENV/
 # PDF output files (test artifacts)
 panelin_reports/output/*.pdf
 
+# MCP memory store files (generated at runtime)
+mcp/quotation_memory.json
+
 # IDE
 .vscode/
 .idea/
