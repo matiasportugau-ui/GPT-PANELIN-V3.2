@@ -7,8 +7,11 @@ Returns lightweight results (id, title, handle, type, vendor, tags).
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 KB_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_FILE = KB_ROOT / "shopify_catalog_v1.json"
@@ -81,12 +84,16 @@ def _to_contract_result(product: dict[str, Any]) -> dict[str, Any]:
 
 async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
     """Execute catalog_search tool and return results in v1 contract format."""
+    """Execute catalog_search tool and return v1 contract envelope."""
     query = arguments.get("query", "")
     category = arguments.get("category", "all")
     limit = arguments.get("limit", 5)
 
     # Validate query
     if not query:
+    # Validate query parameter (contract requires minLength=2, strip whitespace)
+    query_stripped = query.strip() if isinstance(query, str) else ""
+    if len(query_stripped) < 2:
         return {
             "ok": False,
             "contract_version": "v1",
@@ -97,6 +104,19 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
         }
     
     if len(query) < 2:
+                "message": "Query parameter must be at least 2 characters long",
+                "details": {"query": query}
+            }
+        }
+    
+    # Use the stripped query for processing
+    query = query_stripped
+
+    # Validate and normalize limit parameter (v1 contract: integer 1..30)
+    try:
+        limit_int = int(limit)
+    except (TypeError, ValueError):
+        # Use INTERNAL_ERROR since contract doesn't define INVALID_LIMIT
         return {
             "ok": False,
             "contract_version": "v1",
@@ -108,6 +128,23 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
         }
     
     if len(query) > 120:
+                "code": "INTERNAL_ERROR",
+                "message": "Invalid 'limit' parameter. It must be an integer between 1 and 30.",
+                "details": {"limit": limit},
+            },
+        }
+
+    # Clamp to valid range
+    if limit_int < 1:
+        limit_int = 1
+    elif limit_int > 30:
+        limit_int = 30
+
+    limit = limit_int
+
+    # Validate category parameter
+    valid_categories = ["techo", "pared", "camara", "accesorio", "all"]
+    if category not in valid_categories:
         return {
             "ok": False,
             "contract_version": "v1",
@@ -121,6 +158,17 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
     # Validate category
     valid_categories = ["techo", "pared", "camara", "accesorio", "all"]
     if category not in valid_categories:
+                "code": "INVALID_CATEGORY",
+                "message": f"Invalid category '{category}'. Must be one of: {', '.join(valid_categories)}",
+                "details": {"category": category}
+            }
+        }
+
+    try:
+        catalog = _load_catalog()
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        # Catalog data file issues - use CATALOG_UNAVAILABLE
+        logger.exception("Catalog data unavailable")
         return {
             "ok": False,
             "contract_version": "v1",
@@ -133,6 +181,14 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
     
     # Validate limit
     if not isinstance(limit, int) or limit < 1 or limit > 30:
+                "code": "CATALOG_UNAVAILABLE",
+                "message": "Catalog data is currently unavailable",
+                "details": {}
+            }
+        }
+    except Exception:
+        # Other unexpected errors during catalog loading
+        logger.exception("Error loading catalog")
         return {
             "ok": False,
             "contract_version": "v1",
@@ -145,6 +201,13 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
 
     try:
         catalog = _load_catalog()
+                "code": "INTERNAL_ERROR",
+                "message": "Internal error processing catalog_search request",
+                "details": {}
+            }
+        }
+    
+    try:
         norm_query = _normalize(query)
 
         # Determine category keywords
@@ -168,6 +231,23 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
                     continue
 
             results.append(_to_contract_result(product))
+            # Transform to contract schema format, using the lightweight helper as the base
+            lightweight = _to_lightweight(product)
+            result = {
+                "product_id": str(lightweight.get("id", "")),
+                "name": lightweight.get("title", ""),
+                "category": lightweight.get("type", ""),
+            }
+
+            # Add optional fields if available
+            handle_val = lightweight.get("handle", "")
+            if handle_val:
+                result["url"] = f"https://bmcuruguay.uy/products/{handle_val}"
+            # Simple relevance score based on position in search results
+            # Score decreases linearly from 1.0 to 0.1 as more results are added
+            result["score"] = min(1.0, max(0.1, 1.0 - (len(results) * 0.05)))
+            
+            results.append(result)
             if len(results) >= limit:
                 break
 
@@ -188,6 +268,11 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
             }
         }
     except Exception as e:
+
+    except Exception:
+        # Log the full exception for debugging
+        logger.exception("Error processing catalog_search request")
+        
         return {
             "ok": False,
             "contract_version": "v1",
@@ -195,5 +280,7 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
                 "code": "INTERNAL_ERROR",
                 "message": f"Internal error during catalog search: {str(e)}",
                 "details": {"exception_type": type(e).__name__}
+                "message": "Internal error processing catalog_search request",
+                "details": {}
             }
         }
