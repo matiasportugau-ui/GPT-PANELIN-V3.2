@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -219,7 +220,6 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
 
     except Exception as e:
         # Log the full exception for debugging (in production, use proper logging)
-        import traceback
         traceback.print_exc()
         
         return {

@@ -7,6 +7,7 @@ Returns lightweight results (id, title, handle, type, vendor, tags).
 from __future__ import annotations
 
 import json
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -143,14 +144,13 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
 
     except Exception as e:
         # Log the full exception for debugging (in production, use proper logging)
-        import traceback
         traceback.print_exc()
         
         return {
             "ok": False,
             "contract_version": "v1",
             "error": {
-                "code": "CATALOG_UNAVAILABLE",
+                "code": "INTERNAL_ERROR",
                 "message": "Internal error processing catalog_search request",
                 "details": {}
             }

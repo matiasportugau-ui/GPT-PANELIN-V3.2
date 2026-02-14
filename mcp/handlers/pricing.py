@@ -7,6 +7,7 @@ or free-text search. All prices are in USD with IVA 22% included.
 from __future__ import annotations
 
 import json
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -188,7 +189,6 @@ async def handle_price_check(arguments: dict[str, Any]) -> dict[str, Any]:
 
     except Exception as e:
         # Log the full exception for debugging (in production, use proper logging)
-        import traceback
         traceback.print_exc()
         
         return {
