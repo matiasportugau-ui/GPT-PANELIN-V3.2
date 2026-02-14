@@ -57,6 +57,26 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
     category = arguments.get("category", "all")
     limit = arguments.get("limit", 5)
 
+    # Validate and normalize limit parameter (v1 contract: integer 1..30)
+    try:
+        limit_int = int(limit)
+    except (TypeError, ValueError):
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "INVALID_LIMIT",
+                "message": "Invalid 'limit' parameter. It must be an integer between 1 and 30.",
+                "details": {"limit": limit},
+            },
+        }
+
+    if limit_int < 1:
+        limit_int = 1
+    elif limit_int > 30:
+        limit_int = 30
+
+    limit = limit_int
     # Validate query parameter
     if not query:
         return {
