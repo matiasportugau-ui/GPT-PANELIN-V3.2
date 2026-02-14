@@ -113,7 +113,7 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
 
     try:
         catalog = _load_catalog()
-    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
         # Catalog data file issues - use CATALOG_UNAVAILABLE
         logger.exception("Catalog data unavailable")
         return {
@@ -125,7 +125,7 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
                 "details": {}
             }
         }
-    except Exception as e:
+    except Exception:
         # Other unexpected errors during catalog loading
         logger.exception("Error loading catalog")
         return {
@@ -187,7 +187,7 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
             "results": results
         }
 
-    except Exception as e:
+    except Exception:
         # Log the full exception for debugging
         logger.exception("Error processing catalog_search request")
         

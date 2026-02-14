@@ -227,7 +227,7 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
             "note": "This is a parametric estimate. Final BOM should be validated against KB formulas in BMC_Base_Conocimiento_GPT-2.json.",
         }
 
-    except Exception as e:
+    except Exception:
         # Log the full exception for debugging
         logger.exception("Error processing bom_calculate request")
         

@@ -193,7 +193,7 @@ async def handle_price_check(arguments: dict[str, Any]) -> dict[str, Any]:
             "matches": matches
         }
 
-    except Exception as e:
+    except Exception:
         # Log the full exception for debugging
         logger.exception("Error processing price_check request")
         
