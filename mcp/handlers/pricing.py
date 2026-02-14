@@ -158,20 +158,73 @@ async def handle_price_check(arguments: dict[str, Any], legacy_format: bool = Fa
     filter_type = arguments.get("filter_type", "search")
     thickness_mm = arguments.get("thickness_mm")
 
-    # Validate query parameter
-    if not query:
+    # Strip whitespace from query before validation
+    query = query.strip()
+
+    # Validate query parameter (minLength: 2 per contract)
+    if not query or len(query) < 2:
         error_response = {
             "ok": False,
             "contract_version": CONTRACT_VERSION,
             "error": {
                 "code": PRICE_CHECK_ERROR_CODES["INVALID_FILTER"],
-                "message": "Query parameter is required",
+                "message": "Query parameter is required and must be at least 2 characters long",
             }
         }
         if legacy_format:
-            return {"error": "Query parameter is required", "results": []}
+            return {"error": "Query parameter is required and must be at least 2 characters long", "results": []}
         logger.debug("Wrapped price_check error response in v1 envelope")
         return error_response
+    
+    # Validate filter_type (must be one of allowed values per contract)
+    allowed_filter_types = ["sku", "family", "type", "search"]
+    if filter_type not in allowed_filter_types:
+        error_response = {
+            "ok": False,
+            "contract_version": CONTRACT_VERSION,
+            "error": {
+                "code": PRICE_CHECK_ERROR_CODES["INVALID_FILTER"],
+                "message": f"filter_type must be one of {allowed_filter_types}",
+                "details": {"received": filter_type}
+            }
+        }
+        if legacy_format:
+            return {"error": f"filter_type must be one of {allowed_filter_types}", "results": []}
+        logger.debug("Wrapped price_check error response in v1 envelope")
+        return error_response
+    
+    # Validate thickness_mm (must be in range [20, 250] per contract)
+    if thickness_mm is not None:
+        try:
+            thickness_val = float(thickness_mm)
+            if thickness_val < 20 or thickness_val > 250:
+                error_response = {
+                    "ok": False,
+                    "contract_version": CONTRACT_VERSION,
+                    "error": {
+                        "code": PRICE_CHECK_ERROR_CODES["INVALID_THICKNESS"],
+                        "message": "thickness_mm must be between 20 and 250",
+                        "details": {"received": thickness_mm}
+                    }
+                }
+                if legacy_format:
+                    return {"error": "thickness_mm must be between 20 and 250", "results": []}
+                logger.debug("Wrapped price_check error response in v1 envelope")
+                return error_response
+        except (ValueError, TypeError):
+            error_response = {
+                "ok": False,
+                "contract_version": CONTRACT_VERSION,
+                "error": {
+                    "code": PRICE_CHECK_ERROR_CODES["INVALID_THICKNESS"],
+                    "message": "thickness_mm must be a valid number",
+                    "details": {"received": thickness_mm}
+                }
+            }
+            if legacy_format:
+                return {"error": "thickness_mm must be a valid number", "results": []}
+            logger.debug("Wrapped price_check error response in v1 envelope")
+            return error_response
 
     try:
         data = _load_pricing()
@@ -226,5 +279,5 @@ async def handle_price_check(arguments: dict[str, Any], legacy_format: bool = Fa
         }
         if legacy_format:
             return {"error": f"Internal error: {str(e)}", "results": []}
-        logger.debug("Wrapped price_check internal error in v1 envelope")
+        logger.exception("Internal error during price lookup")
         return error_response

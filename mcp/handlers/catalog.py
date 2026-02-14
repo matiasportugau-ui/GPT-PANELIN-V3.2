@@ -129,35 +129,33 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
     category = arguments.get("category", "all")
     limit = arguments.get("limit", 5)
 
-    # Validate query parameter
-    if not query:
+    # Strip whitespace from query before validation
+    query = query.strip()
+
+    # Validate query parameter (minLength: 2 per contract)
+    if not query or len(query) < 2:
         error_response = {
             "ok": False,
             "contract_version": CONTRACT_VERSION,
             "error": {
                 "code": CATALOG_SEARCH_ERROR_CODES["QUERY_TOO_SHORT"],
-                "message": "Query parameter is required",
+                "message": "Query parameter is required and must be at least 2 characters long",
             }
         }
         if legacy_format:
-            return {"error": "Query parameter is required", "results": []}
+            return {"error": "Query parameter is required and must be at least 2 characters long", "results": []}
         logger.debug("Wrapped catalog_search error response in v1 envelope")
         return error_response
     
-    # Validate query length
-    if len(query) < 2:
-        error_response = {
-            "ok": False,
-            "contract_version": CONTRACT_VERSION,
-            "error": {
-                "code": CATALOG_SEARCH_ERROR_CODES["QUERY_TOO_SHORT"],
-                "message": "Query must be at least 2 characters long",
-            }
-        }
-        if legacy_format:
-            return {"error": "Query must be at least 2 characters long", "results": []}
-        logger.debug("Wrapped catalog_search error response in v1 envelope")
-        return error_response
+    # Validate and clamp limit parameter (must be in range [1, 30] per contract)
+    try:
+        limit = int(limit)
+        if limit < 1:
+            limit = 1
+        elif limit > 30:
+            limit = 30
+    except (ValueError, TypeError):
+        limit = 5  # Use default if conversion fails
 
     try:
         catalog = _load_catalog()
@@ -248,5 +246,5 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
         }
         if legacy_format:
             return {"error": f"Internal error: {str(e)}", "results": []}
-        logger.debug("Wrapped catalog_search internal error in v1 envelope")
+        logger.exception("Internal error during catalog search")
         return error_response

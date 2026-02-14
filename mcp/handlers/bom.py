@@ -141,7 +141,24 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         logger.debug("Wrapped bom_calculate error response in v1 envelope")
         return error_response
     
-    # Validate thickness_mm
+    # Validate usage parameter (must be one of allowed values per contract)
+    allowed_usage_values = ["techo", "pared", "camara"]
+    if usage not in allowed_usage_values:
+        error_response = {
+            "ok": False,
+            "contract_version": CONTRACT_VERSION,
+            "error": {
+                "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                "message": f"usage must be one of {allowed_usage_values}",
+                "details": {"received": usage}
+            }
+        }
+        if legacy_format:
+            return {"error": f"usage must be one of {allowed_usage_values}"}
+        logger.debug("Wrapped bom_calculate error response in v1 envelope")
+        return error_response
+    
+    # Validate thickness_mm (must be in range [30, 250] per contract)
     if not thickness or thickness <= 0:
         error_response = {
             "ok": False,
@@ -159,6 +176,135 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
             }
         logger.debug("Wrapped bom_calculate error response in v1 envelope")
         return error_response
+    
+    try:
+        thickness_val = float(thickness)
+        if thickness_val < 30 or thickness_val > 250:
+            error_response = {
+                "ok": False,
+                "contract_version": CONTRACT_VERSION,
+                "error": {
+                    "code": BOM_CALCULATE_ERROR_CODES["INVALID_THICKNESS"],
+                    "message": "thickness_mm must be between 30 and 250",
+                    "details": {"received": thickness}
+                }
+            }
+            if legacy_format:
+                return {"error": "thickness_mm must be between 30 and 250", "received": thickness}
+            logger.debug("Wrapped bom_calculate error response in v1 envelope")
+            return error_response
+    except (ValueError, TypeError):
+        error_response = {
+            "ok": False,
+            "contract_version": CONTRACT_VERSION,
+            "error": {
+                "code": BOM_CALCULATE_ERROR_CODES["INVALID_THICKNESS"],
+                "message": "thickness_mm must be a valid number",
+                "details": {"received": thickness}
+            }
+        }
+        if legacy_format:
+            return {"error": "thickness_mm must be a valid number", "received": thickness}
+        logger.debug("Wrapped bom_calculate error response in v1 envelope")
+        return error_response
+    
+    # Validate length_m (must be in range (0, 30] per contract with exclusiveMinimum)
+    try:
+        length_val = float(length)
+        if length_val <= 0 or length_val > 30:
+            error_response = {
+                "ok": False,
+                "contract_version": CONTRACT_VERSION,
+                "error": {
+                    "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                    "message": "length_m must be greater than 0 and at most 30",
+                    "details": {"received": length}
+                }
+            }
+            if legacy_format:
+                return {"error": "length_m must be greater than 0 and at most 30"}
+            logger.debug("Wrapped bom_calculate error response in v1 envelope")
+            return error_response
+    except (ValueError, TypeError):
+        error_response = {
+            "ok": False,
+            "contract_version": CONTRACT_VERSION,
+            "error": {
+                "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                "message": "length_m must be a valid number",
+                "details": {"received": length}
+            }
+        }
+        if legacy_format:
+            return {"error": "length_m must be a valid number"}
+        logger.debug("Wrapped bom_calculate error response in v1 envelope")
+        return error_response
+    
+    # Validate width_m (must be in range (0, 20] per contract with exclusiveMinimum)
+    try:
+        width_val = float(width)
+        if width_val <= 0 or width_val > 20:
+            error_response = {
+                "ok": False,
+                "contract_version": CONTRACT_VERSION,
+                "error": {
+                    "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                    "message": "width_m must be greater than 0 and at most 20",
+                    "details": {"received": width}
+                }
+            }
+            if legacy_format:
+                return {"error": "width_m must be greater than 0 and at most 20"}
+            logger.debug("Wrapped bom_calculate error response in v1 envelope")
+            return error_response
+    except (ValueError, TypeError):
+        error_response = {
+            "ok": False,
+            "contract_version": CONTRACT_VERSION,
+            "error": {
+                "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                "message": "width_m must be a valid number",
+                "details": {"received": width}
+            }
+        }
+        if legacy_format:
+            return {"error": "width_m must be a valid number"}
+        logger.debug("Wrapped bom_calculate error response in v1 envelope")
+        return error_response
+    
+    # Validate quantity_panels if provided (must be in range [1, 2000] per contract)
+    if qty_panels is not None:
+        try:
+            qty_panels_val = int(qty_panels)
+            if qty_panels_val < 1 or qty_panels_val > 2000:
+                error_response = {
+                    "ok": False,
+                    "contract_version": CONTRACT_VERSION,
+                    "error": {
+                        "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                        "message": "quantity_panels must be between 1 and 2000",
+                        "details": {"received": qty_panels}
+                    }
+                }
+                if legacy_format:
+                    return {"error": "quantity_panels must be between 1 and 2000"}
+                logger.debug("Wrapped bom_calculate error response in v1 envelope")
+                return error_response
+            qty_panels = qty_panels_val
+        except (ValueError, TypeError):
+            error_response = {
+                "ok": False,
+                "contract_version": CONTRACT_VERSION,
+                "error": {
+                    "code": BOM_CALCULATE_ERROR_CODES["INVALID_DIMENSIONS"],
+                    "message": "quantity_panels must be a valid integer",
+                    "details": {"received": qty_panels}
+                }
+            }
+            if legacy_format:
+                return {"error": "quantity_panels must be a valid integer"}
+            logger.debug("Wrapped bom_calculate error response in v1 envelope")
+            return error_response
 
     try:
         rules = _load_bom_rules()
@@ -242,6 +388,10 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         panel_unit_price = 0.0
         panel_sku = sku_candidates[0]  # Default to first format
         
+        # Note: Internal calls to handle_price_check always use v1 format (legacy_format not passed)
+        # regardless of the format requested by external callers. This ensures consistent internal
+        # communication while maintaining backwards compatibility at the API boundary.
+        
         # Try each SKU candidate
         for sku_candidate in sku_candidates:
             try:
@@ -251,7 +401,9 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
                     panel_unit_price = match.get("price_usd_iva_inc", 0.0)
                     panel_sku = match.get("sku", sku_candidate)
                     break
-            except Exception:
+            except Exception as e:
+                # Log the exception but continue trying other SKU candidates
+                logger.debug(f"Failed to fetch price for SKU candidate '{sku_candidate}': {e}")
                 continue
         
         # Add panel item
@@ -308,5 +460,5 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         }
         if legacy_format:
             return {"error": f"Internal error: {str(e)}"}
-        logger.debug("Wrapped bom_calculate internal error in v1 envelope")
+        logger.exception("Internal error during BOM calculation")
         return error_response

@@ -58,6 +58,39 @@ class TestPriceCheckV1Contract:
             assert result["error"]["code"] == "SKU_NOT_FOUND"
             
         asyncio.run(run())
+    
+    def test_invalid_filter_error(self):
+        """Invalid filter_type returns proper error code."""
+        async def run():
+            result = await handle_price_check({
+                "query": "IROOF30",
+                "filter_type": "invalid_filter_type"
+            })
+            assert result["ok"] is False
+            assert result["error"]["code"] == "INVALID_FILTER"
+            
+        asyncio.run(run())
+    
+    def test_invalid_thickness_error(self):
+        """Out of range thickness_mm returns proper error code."""
+        async def run():
+            # Test below minimum
+            result = await handle_price_check({
+                "query": "IROOF30",
+                "thickness_mm": 10
+            })
+            assert result["ok"] is False
+            assert result["error"]["code"] == "INVALID_THICKNESS"
+            
+            # Test above maximum
+            result = await handle_price_check({
+                "query": "IROOF30",
+                "thickness_mm": 300
+            })
+            assert result["ok"] is False
+            assert result["error"]["code"] == "INVALID_THICKNESS"
+            
+        asyncio.run(run())
 
 
 class TestCatalogSearchV1Contract:
@@ -101,6 +134,18 @@ class TestCatalogSearchV1Contract:
             assert result["error"]["code"] == "QUERY_TOO_SHORT"
             
         asyncio.run(run())
+    
+    def test_invalid_category_error(self):
+        """Invalid category returns proper error code."""
+        async def run():
+            result = await handle_catalog_search({
+                "query": "panel",
+                "category": "invalid_category"
+            })
+            assert result["ok"] is False
+            assert result["error"]["code"] == "INVALID_CATEGORY"
+            
+        asyncio.run(run())
 
 
 class TestBOMCalculateV1Contract:
@@ -137,6 +182,7 @@ class TestBOMCalculateV1Contract:
                 assert "sku" in item
                 assert "quantity" in item
                 assert "unit" in item
+                assert "unit_price_usd_iva_inc" in item
                 assert "subtotal_usd_iva_inc" in item
             
         asyncio.run(run())
