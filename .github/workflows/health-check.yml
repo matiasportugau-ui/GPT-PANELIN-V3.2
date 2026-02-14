@@ -15,10 +15,15 @@ on:
           - production
           - staging
 
+permissions:
+  contents: read
+
 jobs:
   health-check:
     name: System Health Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
