@@ -213,29 +213,12 @@ GPT-PANELIN-V3.3/
 │       │   ├── pricing.py                       # price_check tool handler
 │       │   ├── catalog.py                       # catalog_search tool handler
 │       │   ├── bom.py                           # bom_calculate tool handler
-│       │   ├── errors.py                        # report_error tool handler
-│       │   └── tasks.py                         # Background task tool handlers (7 tools)
-│       ├── tasks/                               # Background task processing engine
-│       │   ├── models.py                        # Task lifecycle models and data classes
-│       │   ├── manager.py                       # Async task manager with concurrency control
-│       │   ├── workers.py                       # Worker functions for batch/bulk operations
-│       │   └── tests/                           # 55 comprehensive tests
-│       │       ├── test_models.py
-│       │       ├── test_manager.py
-│       │       ├── test_workers.py
-│       │       └── test_handlers.py
+│       │   └── errors.py                        # report_error tool handler
 │       └── tools/                               # JSON tool schemas
 │           ├── price_check.json                 # Pricing lookup schema
 │           ├── catalog_search.json              # Catalog search schema
 │           ├── bom_calculate.json               # BOM calculator schema
 │           ├── report_error.json                # Error reporting schema
-│           ├── batch_bom_calculate.json         # Batch BOM background task schema
-│           ├── bulk_price_check.json            # Bulk pricing background task schema
-│           ├── full_quotation.json              # Full quotation background task schema
-│           ├── task_status.json                 # Task status query schema
-│           ├── task_result.json                 # Task result retrieval schema
-│           ├── task_list.json                   # Task listing schema
-│           └── task_cancel.json                 # Task cancellation schema
 │
 ├── CALCULATION ENGINE
 │   ├── quotation_calculator_v3.py               # Python calculation engine v3.1
@@ -882,13 +865,6 @@ The Model Context Protocol (MCP) is an open standard for connecting AI assistant
 
 | Tool | Description | Use Case |
 |------|-------------|----------|
-| 📦 **batch_bom_calculate** | Batch BOM for multiple panels | Multi-zone projects needing BOMs for several panel types |
-| 💰 **bulk_price_check** | Bulk pricing for multiple products | Compare prices across families, build multi-product quotes |
-| 📄 **full_quotation** | Combined BOM + pricing + catalog | Complete quotation in one pass (BOM, pricing, accessories) |
-| 📊 **task_status** | Check background task progress | Poll running tasks for completion percentage |
-| 📥 **task_result** | Retrieve completed task output | Get the full result data when a task finishes |
-| 📋 **task_list** | List recent background tasks | Monitor and review task history with optional filters |
-| ❌ **task_cancel** | Cancel a pending/running task | Stop tasks that are no longer needed |
 
 ### Quick Start
 
@@ -1055,96 +1031,6 @@ python -m mcp.server --transport sse --port 8000
 
 **Response:** Persists error to `corrections_log.json` for tracking and potential future automation (e.g., generating GitHub PRs via external tools; not implemented in this repository).
 
-#### 5. batch_bom_calculate (Background Task)
-
-**Purpose:** Submit multiple BOM calculations as a single background task. Ideal for multi-zone projects.
-
-**Input Schema:**
-```json
-{
-  "items": [
-    {
-      "product_family": "ISODEC",
-      "thickness_mm": 100,
-      "core_type": "EPS",
-      "usage": "techo",
-      "length_m": 12.0,
-      "width_m": 6.0
-    },
-    {
-      "product_family": "ISOPANEL",
-      "thickness_mm": 50,
-      "core_type": "EPS",
-      "usage": "pared",
-      "length_m": 8.0,
-      "width_m": 4.0
-    }
-  ]
-}
-```
-
-**Response:** Returns a `task_id` for polling with `task_status` and retrieval with `task_result`.
-
-#### 6. bulk_price_check (Background Task)
-
-**Purpose:** Look up pricing for multiple products at once.
-
-**Input Schema:**
-```json
-{
-  "queries": [
-    {"query": "ISODEC", "filter_type": "family"},
-    {"query": "ISOROOF", "filter_type": "family"},
-    {"query": "panel techo 100mm", "filter_type": "search"}
-  ]
-}
-```
-
-**Response:** Returns a `task_id` for status polling and result retrieval.
-
-#### 7. full_quotation (Background Task)
-
-**Purpose:** Generate a complete quotation combining BOM + pricing + catalog in one pass.
-
-**Input Schema:**
-```json
-{
-  "product_family": "ISODEC",
-  "thickness_mm": 100,
-  "core_type": "EPS",
-  "usage": "techo",
-  "length_m": 12.0,
-  "width_m": 6.0,
-  "client_name": "Empresa Constructora ABC",
-  "project_name": "Galpon Industrial",
-  "discount_percent": 5
-}
-```
-
-**Response:** Returns a `task_id`. The completed result includes BOM, pricing, catalog matches, and a quotation summary.
-
-#### 8. task_status / task_result / task_list / task_cancel
-
-**Purpose:** Manage background tasks.
-
-```json
-// Check status
-{"task_id": "TASK-A1B2C3D4"}
-
-// Retrieve result (only for completed tasks)
-{"task_id": "TASK-A1B2C3D4"}
-
-// List tasks (all filters optional)
-{"status": "running", "task_type": "batch_bom_calculate", "limit": 10}
-
-// Cancel a task
-{"task_id": "TASK-A1B2C3D4"}
-```
-
-**Task States:** `pending` -> `running` -> `completed` | `failed` | `cancelled`
-
-**Progress Tracking:** Running tasks include progress data (percentage, current item, items completed/total).
-
 ### Integration Paths
 
 There are two distinct integration paths in this project:
@@ -1168,13 +1054,6 @@ There are two distinct integration paths in this project:
 - `panelin_mcp_server/tools/catalog_search.json`
 - `panelin_mcp_server/tools/bom_calculate.json`
 - `panelin_mcp_server/tools/report_error.json`
-- `panelin_mcp_server/tools/batch_bom_calculate.json`
-- `panelin_mcp_server/tools/bulk_price_check.json`
-- `panelin_mcp_server/tools/full_quotation.json`
-- `panelin_mcp_server/tools/task_status.json`
-- `panelin_mcp_server/tools/task_result.json`
-- `panelin_mcp_server/tools/task_list.json`
-- `panelin_mcp_server/tools/task_cancel.json`
 
 These JSON files describe MCP tools and are consumed by MCP-aware clients, not directly by OpenAI Custom GPT Actions.
 
@@ -1203,29 +1082,12 @@ panelin_mcp_server/
 │   ├── pricing.py        # price_check handler
 │   ├── catalog.py        # catalog_search handler
 │   ├── bom.py            # bom_calculate handler
-│   ├── errors.py         # report_error handler
-│   └── tasks.py          # Background task tool handlers (7 tools)
-├── tasks/                 # Background task processing engine
-│   ├── models.py         # Task, TaskProgress, TaskStatus, TaskType
-│   ├── manager.py        # Async task manager (submit, cancel, query)
-│   ├── workers.py        # Worker functions (batch BOM, bulk pricing, quotation)
-│   └── tests/            # 55 comprehensive tests
-│       ├── test_models.py
-│       ├── test_manager.py
-│       ├── test_workers.py
-│       └── test_handlers.py
+│   └── errors.py         # report_error handler
 └── tools/                 # JSON tool schemas
     ├── price_check.json
     ├── catalog_search.json
     ├── bom_calculate.json
-    ├── report_error.json
-    ├── batch_bom_calculate.json
-    ├── bulk_price_check.json
-    ├── full_quotation.json
-    ├── task_status.json
-    ├── task_result.json
-    ├── task_list.json
-    └── task_cancel.json
+    └── report_error.json
 ```
 
 ### Additional Resources
