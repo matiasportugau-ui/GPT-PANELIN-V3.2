@@ -112,9 +112,9 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
             "ok": False,
             "contract_version": "v1",
             "error": {
-                "code": "QUERY_TOO_SHORT",
+                "code": "QUERY_TOO_SHORT",  # Using contract-defined code
                 "message": f"Query must be at most 120 characters long (received: {len(query)})",
-                "details": {"query": query[:50] + "...", "length": len(query)}
+                "details": {"query": query[:50] + "...", "length": len(query), "note": "Query too long"}
             }
         }
     
@@ -137,7 +137,7 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
             "ok": False,
             "contract_version": "v1",
             "error": {
-                "code": "INVALID_CATEGORY",
+                "code": "INTERNAL_ERROR",  # Using available contract code for input validation
                 "message": f"Limit must be an integer between 1 and 30 (received: {limit})",
                 "details": {"received": limit, "min": 1, "max": 30}
             }

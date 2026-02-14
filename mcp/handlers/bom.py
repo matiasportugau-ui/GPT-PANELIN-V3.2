@@ -216,6 +216,8 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
         items = []
         
         # Panel item (SKU would need to be looked up from pricing data in real implementation)
+        # NOTE: Using placeholder SKU format and zero prices. Real implementation would require
+        # integration with pricing handler to look up actual SKU and price data.
         panel_sku = f"{family}_{core}_{int(thickness)}mm"
         panel_unit_price = 0.0  # Placeholder - would need price lookup
         panel_subtotal = panel_unit_price * qty_panels
@@ -231,6 +233,8 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
         
         # Fixation/support items
         if n_supports > 0:
+            # NOTE: Using fallback SKU if not found in system configuration.
+            # Real implementation should ensure all system configs include valid soporte_sku.
             support_sku = system.get("soporte_sku", "SUPPORT_GENERIC")
             support_unit_price = 0.0  # Placeholder
             support_subtotal = support_unit_price * n_supports
@@ -245,6 +249,7 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
             })
         
         # Calculate total
+        # NOTE: Total will be 0.0 until price lookup is implemented
         total_usd = sum(item["subtotal_usd_iva_inc"] for item in items)
 
         return {
