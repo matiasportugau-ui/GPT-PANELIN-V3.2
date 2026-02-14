@@ -570,6 +570,80 @@ class TestExtractPrimaryOutput:
         assert result["value"]["name"] == "catalog_search"
         assert result["value"]["expected_contract_version"] == "v1"
 
+    def test_prefers_output_tool_call_over_choices_message(self):
+        """When both output[] and choices[].message.tool_calls are present, output[] is preferred."""
+        response = {
+            "output": [
+                {
+                "type": "message",
+                "content": [
+                    {
+                        "type": "function_call",
+                        "name": "catalog_search",
+                        "arguments": {"query": "from_output"}
+                    }
+                ]
+                }
+            ],
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "id": "call_from_choices",
+                                "function": {
+                                    "name": "catalog_search",
+                                    "arguments": '{"query": "from_choices"}',
+                                },
+                                "type": "function",
+                            }
+                        ]
+                    }
+                }
+            ],
+        }
+        result = extract_primary_output(response)
+        assert result["type"] == "tool_call"
+        assert result["value"]["name"] == "catalog_search"
+        # Asserts precedence: the tool call from output[] wins over choices[].message.tool_calls
+        assert result["value"]["arguments"]["query"] == "from_output"
+        assert result["value"]["expected_contract_version"] == "v1"
+
+    def test_uses_first_tool_call_in_list(self):
+        """When multiple tool calls are present in the same list, the first one is used."""
+        response = {
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "function": {
+                                    "name": "first_tool",
+                                    "arguments": '{"param": "first"}',
+                                },
+                                "type": "function",
+                            },
+                            {
+                                "id": "call_2",
+                                "function": {
+                                    "name": "second_tool",
+                                    "arguments": '{"param": "second"}',
+                                },
+                                "type": "function",
+                            },
+                        ]
+                    }
+                }
+            ]
+        }
+        result = extract_primary_output(response)
+        assert result["type"] == "tool_call"
+        # Asserts stable ordering: the first tool call in the list is selected.
+        assert result["value"]["name"] == "first_tool"
+        assert result["value"]["arguments"]["param"] == "first"
+        assert result["value"]["expected_contract_version"] == "v1"
+
     def test_extracts_tool_call_from_choices_message(self):
         """Chat Completions tool calls in choices[].message.tool_calls are supported."""
         response = {
