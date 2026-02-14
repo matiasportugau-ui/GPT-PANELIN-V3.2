@@ -138,6 +138,7 @@ def create_server() -> Any:
     configure_quotation_store(
         memory_store,
         enable_vector_retrieval=bool(store_metadata.get("enable_vector_retrieval", False)),
+        backend_metadata=store_metadata,
     )
 
     @server.list_tools()
