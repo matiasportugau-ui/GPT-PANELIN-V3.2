@@ -4,6 +4,8 @@
 
 **Complete configuration files and knowledge base for Panelin GPT - Professional quotation assistant for BMC Uruguay panel systems**
 
+**New in v3.3+:** MCP Server architecture for persistent tool access and GitHub integration
+
 ---
 
 ## 📋 Table of Contents
@@ -12,7 +14,8 @@
 - [Features](#features)
 - [GPT Configuration](#gpt-configuration)
 - [Repository Structure](#repository-structure)
-- [EVOLUCIONADOR - Autonomous Evolution Agent](#-evolucionador---autonomous-evolution-agent)
+- [EVOLUCIONADOR - Autonomous Evolution Agent](#evolucionador---autonomous-evolution-agent)
+- [MCP Server - Model Context Protocol Integration](#mcp-server---model-context-protocol-integration)
 - [Knowledge Base](#knowledge-base)
 - [API Integration](#api-integration)
 - [MCP Server](#-mcp-server)
@@ -151,7 +154,8 @@ GPT-PANELIN-V3.3/
 ├── CORE CONFIGURATION
 │   ├── Instrucciones GPT.rtf                    # Main GPT system instructions (v3.1)
 │   ├── Panelin_GPT_config.json                  # Complete GPT configuration (v2.3)
-│   └── Esquema json.rtf                         # OpenAPI 3.1 schema for Panelin Wolf API
+│   ├── Esquema json.rtf                         # OpenAPI 3.1 schema for Panelin Wolf API
+│   └── llms.txt                                 # LLM-optimized documentation index
 │
 ├── KNOWLEDGE BASE - LEVEL 1 (Master Sources)
 │   ├── BMC_Base_Conocimiento_GPT-2.json         # PRIMARY - Panel prices, formulas, specs
@@ -162,7 +166,8 @@ GPT-PANELIN-V3.3/
 │
 ├── KNOWLEDGE BASE - LEVEL 2-3 (Validation & Dynamic)
 │   ├── BMC_Base_Unificada_v4.json               # Cross-reference validation
-│   └── panelin_truth_bmcuruguay_web_only_v2.json # Web pricing snapshot
+│   ├── panelin_truth_bmcuruguay_web_only_v2.json # Web pricing snapshot
+│   └── corrections_log.json                     # KB error corrections tracking system
 │
 ├── DOCUMENTATION (Guides & Processes)
 │   ├── PANELIN_KNOWLEDGE_BASE_GUIDE.md          # KB hierarchy & usage guide
@@ -176,7 +181,14 @@ GPT-PANELIN-V3.3/
 │   ├── GPT_UPLOAD_IMPLEMENTATION_SUMMARY.md     # Upload tools technical details
 │   ├── USER_GUIDE.md                            # End-user upload guide
 │   ├── IMPLEMENTATION_SUMMARY_V3.3.md           # V3.3 implementation details
-│   └── EVOLUCIONADOR_FINAL_REPORT.md            # EVOLUCIONADOR completion report
+│   ├── EVOLUCIONADOR_FINAL_REPORT.md            # EVOLUCIONADOR completion report
+│   ├── KB_ARCHITECTURE_AUDIT.md                 # KB files MCP migration analysis
+│   ├── KB_MCP_MIGRATION_PROMPT.md               # KB restructuring prompt
+│   ├── MCP_SERVER_COMPARATIVE_ANALYSIS.md       # Top 10 MCP servers comparison
+│   ├── MCP_AGENT_ARCHITECT_PROMPT.md            # MCP architecture AI agent prompt
+│   ├── MCP_RESEARCH_PROMPT.md                   # MCP market research prompt
+│   ├── MCP_CROSSCHECK_EVOLUTION_PLAN.md         # MCP gap analysis & execution plan
+│   └── panelin_context_consolidacion_sin_backend.md # SOP commands reference
 │
 ├── PDF GENERATION MODULE (v3.3)
 │   ├── panelin_reports/
@@ -201,12 +213,29 @@ GPT-PANELIN-V3.3/
 │       │   ├── pricing.py                       # price_check tool handler
 │       │   ├── catalog.py                       # catalog_search tool handler
 │       │   ├── bom.py                           # bom_calculate tool handler
-│       │   └── errors.py                        # report_error tool handler
+│       │   ├── errors.py                        # report_error tool handler
+│       │   └── tasks.py                         # Background task tool handlers (7 tools)
+│       ├── tasks/                               # Background task processing engine
+│       │   ├── models.py                        # Task lifecycle models and data classes
+│       │   ├── manager.py                       # Async task manager with concurrency control
+│       │   ├── workers.py                       # Worker functions for batch/bulk operations
+│       │   └── tests/                           # 55 comprehensive tests
+│       │       ├── test_models.py
+│       │       ├── test_manager.py
+│       │       ├── test_workers.py
+│       │       └── test_handlers.py
 │       └── tools/                               # JSON tool schemas
 │           ├── price_check.json                 # Pricing lookup schema
 │           ├── catalog_search.json              # Catalog search schema
 │           ├── bom_calculate.json               # BOM calculator schema
-│           └── report_error.json                # Error reporting schema
+│           ├── report_error.json                # Error reporting schema
+│           ├── batch_bom_calculate.json         # Batch BOM background task schema
+│           ├── bulk_price_check.json            # Bulk pricing background task schema
+│           ├── full_quotation.json              # Full quotation background task schema
+│           ├── task_status.json                 # Task status query schema
+│           ├── task_result.json                 # Task result retrieval schema
+│           ├── task_list.json                   # Task listing schema
+│           └── task_cancel.json                 # Task cancellation schema
 │
 ├── CALCULATION ENGINE
 │   ├── quotation_calculator_v3.py               # Python calculation engine v3.1
@@ -265,12 +294,45 @@ GPT-PANELIN-V3.3/
 │       ├── test_validator.py
 │       └── test_optimizer.py
 │
+├── mcp/                                         # 🔌 MCP SERVER IMPLEMENTATION
+│   ├── server.py                                # Main MCP server with stdio/SSE transport
+│   ├── requirements.txt                         # MCP SDK dependencies
+│   │
+│   ├── config/
+│   │   └── mcp_server_config.json               # Server configuration & KB paths
+│   │
+│   ├── handlers/                                # Tool implementation handlers
+│   │   ├── __init__.py
+│   │   ├── pricing.py                           # price_check handler
+│   │   ├── catalog.py                           # catalog_search handler
+│   │   ├── bom.py                               # bom_calculate handler
+│   │   └── errors.py                            # report_error handler
+│   │
+│   └── tools/                                   # MCP tool schemas (JSON)
+│       ├── price_check.json                     # Pricing lookup tool schema
+│       ├── catalog_search.json                  # Catalog search tool schema
+│       ├── bom_calculate.json                   # BOM calculation tool schema
+│       └── report_error.json                    # Error reporting tool schema
+│
+├── panelin_mcp_integration/                     # 🔗 MCP INTEGRATION CLIENTS
+│   ├── panelin_mcp_server.py                    # Wolf API MCP wrapper for OpenAI
+│   └── panelin_openai_integration.py            # OpenAI Responses API + MCP tools
+│
 ├── .github/
 │   └── workflows/
 │       └── evolucionador-daily.yml              # Daily automated evolution workflow
 │
-└── docs/                                        # Additional documentation (if present)
-    └── README.md                                # Documentation index
+├── docs/                                        # 📚 DOCUMENTATION HUB
+│   └── README.md                                # Complete documentation index
+│
+├── archive/                                     # 📦 ARCHIVED REVIEW ARTIFACTS
+│   ├── BOOT_PRS_COMPARISON.md                   # PR comparison analysis
+│   ├── BRANCH_REVIEW_REPORT.md                  # Branch review report
+│   ├── PULL_REQUESTS_REVIEW.md                  # 9-PR overview
+│   ├── PR_REVIEW_README.md                      # Review navigation
+│   ├── PR_CONSOLIDATION_ACTION_PLAN.md          # Consolidation plan
+│   └── README_REVIEW_SUMMARY.md                 # README audit results
+│
 ```
 
 ---
@@ -397,6 +459,135 @@ cat reports/latest.md
 
 ---
 
+## 🔌 MCP Server - Model Context Protocol Integration
+
+**Version:** 0.1.0 | **Status:** 🚧 In Development | **Mission:** Persistent tools for quotation workflows
+
+### What is the MCP Server?
+
+The MCP (Model Context Protocol) Server is a new architectural component that exposes GPT-PANELIN's core capabilities as persistent, callable tools through the Model Context Protocol. This enables:
+
+- **Persistent tool access** without uploading large KB files to GPT context
+- **Real-time data access** via API-backed tools
+- **Session memory** through error correction logging
+- **Planned: GitHub integration** for KB version control and automated updates (roadmap)
+
+### MCP Server Architecture
+
+The implementation consists of three main components:
+
+#### 1. Core MCP Server (`mcp/`)
+
+A minimal MCP server built on the MCP SDK that provides four core tools:
+
+| Tool | Purpose | Handler |
+|------|---------|---------|
+| `price_check` | Product pricing lookup from master KB | `handlers/pricing.py` |
+| `catalog_search` | Product catalog search with filters | `handlers/catalog.py` |
+| `bom_calculate` | Complete BOM calculation using parametric rules | `handlers/bom.py` |
+| `report_error` | Log KB errors to corrections_log.json | `handlers/errors.py` |
+
+**Key Features:**
+- Dual transport support: `stdio` (local/OpenAI Custom GPT Actions) and `sse` (remote hosting)
+- JSON tool schemas in `tools/` directory
+- Direct KB file access (no duplication in GPT context)
+- Handlers use Python stdlib only; MCP server requires MCP SDK + transport deps (see `mcp/requirements.txt`)
+
+**Usage:**
+```bash
+# Install dependencies
+cd mcp
+pip install -r requirements.txt
+
+# Run with stdio transport (for local testing / OpenAI)
+python server.py
+
+# Run with SSE transport (for remote hosting)
+python server.py --transport sse --port 8000
+```
+
+#### 2. MCP Integration Clients (`panelin_mcp_integration/`)
+
+Two integration patterns for connecting the MCP server to OpenAI:
+
+**A. Wolf API MCP Wrapper (`panelin_mcp_server.py`)**
+- Wraps the existing Panelin Wolf API as MCP-compatible tools
+- Handles authentication, validation, and error handling
+- Returns MCP-compliant tool registry for OpenAI integration
+- Supports: `find_products`, `get_product_price`, `check_availability`
+
+**B. OpenAI Responses API Integration (`panelin_openai_integration.py`)**
+- Full implementation using OpenAI Responses API with MCP tools
+- Auto-approved tool calls (no user confirmation needed)
+- Direct API integration without Custom GPT Actions configuration
+- Pattern for future GPT-5 MCP integration
+
+**Usage Example:**
+```python
+from panelin_mcp_integration.panelin_mcp_server import PanelinMCPServer
+
+# Initialize MCP server wrapper
+server = PanelinMCPServer(api_key="YOUR_WOLF_API_KEY")
+
+# Get tool registry for OpenAI
+tools = server.tools_registry()
+
+# Tools can now be registered with OpenAI Custom GPT Actions
+```
+
+#### 3. Configuration & Documentation
+
+**Configuration:**
+- `mcp/config/mcp_server_config.json` - Server config with KB paths, OpenAI integration settings, and GitHub MCP capabilities
+- Tool schemas in `mcp/tools/*.json` - MCP-compliant tool definitions
+
+**Research & Analysis:**
+- [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md) - Top 10 MCP server comparison with cost analysis
+- [MCP_AGENT_ARCHITECT_PROMPT.md](MCP_AGENT_ARCHITECT_PROMPT.md) - AI agent prompt for MCP architecture design
+- [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md) - KB restructuring analysis for MCP migration
+- [MCP_CROSSCHECK_EVOLUTION_PLAN.md](MCP_CROSSCHECK_EVOLUTION_PLAN.md) - MCP gap analysis & execution plan
+
+### MCP vs. Traditional Architecture
+
+| Aspect | Traditional (v3.3) | MCP-Enhanced (v4.0) |
+|--------|-------------------|---------------------|
+| **KB Upload** | All files uploaded to GPT | Tools access KB directly |
+| **Context Usage** | ~122K tokens/session | ~40K tokens/session |
+| **Data Updates** | Manual re-upload required | Automatic via GitHub MCP |
+| **Error Corrections** | Lost between sessions | Persisted in corrections_log.json |
+| **API Access** | Via Custom GPT Actions | Native MCP tools |
+| **Session Memory** | Limited to conversation | Persistent tool state |
+| **Cost** | $22.50–$40.50/mo | $15–$57/mo (with GitHub MCP) |
+
+### Current Status & Roadmap
+
+**✅ Completed:**
+- MCP server skeleton with 4 tool handlers
+- Tool schemas and configuration
+- MCP integration client implementations
+- Comparative analysis and architecture planning
+- KB restructuring analysis
+
+**🚧 In Progress:**
+- Handler implementation refinement
+- Testing with OpenAI Custom GPT Actions
+- GitHub MCP integration for KB versioning
+
+**📋 Planned:**
+- Production deployment on Cloud Run
+- Full GitHub MCP sync workflow
+- Qdrant integration for session persistence
+- Automated KB updates via MCP
+
+### Integration Guide
+
+For detailed integration instructions, see:
+- [MCP Server Comparative Analysis](MCP_SERVER_COMPARATIVE_ANALYSIS.md) - Cost analysis and provider comparison
+- [MCP Agent Architect Prompt](MCP_AGENT_ARCHITECT_PROMPT.md) - Architecture design guide
+- [KB Architecture Audit](KB_ARCHITECTURE_AUDIT.md) - Migration strategy
+
+---
+
 ## 📚 Knowledge Base
 
 The knowledge base follows a strict **hierarchical priority system** to ensure accuracy and consistency.
@@ -518,6 +709,38 @@ Product catalog for presentation:
 
 For complete KB guidance, see [PANELIN_KNOWLEDGE_BASE_GUIDE.md](PANELIN_KNOWLEDGE_BASE_GUIDE.md).
 
+### KB Error Correction System
+
+**File:** `corrections_log.json`
+
+A persistent error tracking system for identifying and correcting KB inconsistencies:
+
+**Purpose:**
+- Log pricing errors discovered during quotation sessions
+- Track corrections with source attribution
+- Persist fixes across GPT sessions
+- Enable automated KB updates via MCP
+
+**Schema:**
+```json
+{
+  "id": "COR-NNN",
+  "date": "2026-02-11",
+  "kb_file": "accessories_catalog.json",
+  "field": "items[32].price_usd",
+  "wrong_value": 15.50,
+  "correct_value": 18.75,
+  "source": "User correction in quotation session",
+  "status": "pending | applied | rejected",
+  "applied_date": null
+}
+```
+
+**Integration:**
+- MCP `report_error` tool writes to this file
+- EVOLUCIONADOR validates corrections during analysis
+- Future: Automated PR creation for approved corrections
+
 ---
 
 ## 🔌 API Integration
@@ -628,6 +851,10 @@ The complete OpenAPI 3.1.0 schema is integrated into the GPT configuration. Key 
 | 404 | Not Found | Product not found |
 | 503 | Service Unavailable | API temporarily unavailable |
 
+### LLM-Optimized Documentation
+
+The repository includes `llms.txt` — an LLM-optimized documentation index that provides quick navigation for AI assistants. This file follows the emerging convention for LLM-readable documentation, enabling better context discovery for AI coding assistants and documentation tools.
+
 ---
 
 ## 🔧 MCP Server
@@ -636,11 +863,13 @@ The complete OpenAPI 3.1.0 schema is integrated into the GPT configuration. Key 
 
 **Panelin MCP Server** provides a standards-compliant [Model Context Protocol](https://modelcontextprotocol.io) interface for integrating Panelin's quotation tools with any MCP-compatible AI assistant, including OpenAI's GPTs, Claude Desktop, and other MCP clients.
 
-**Status:** ✅ Production Ready | **Version:** 1.0.0 | **Transport:** stdio, SSE
+**Status:** ✅ Production Ready | **Version:** 0.2.0 | **Transport:** stdio, SSE
 
 ### What is MCP?
 
-The Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. Panelin's MCP server exposes four specialized tools for construction panel quotations:
+The Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. Panelin's MCP server exposes specialized tools for construction panel quotations, including background task processing for long-running operations:
+
+#### Core Tools (Synchronous)
 
 | Tool | Description | Use Case |
 |------|-------------|----------|
@@ -648,6 +877,18 @@ The Model Context Protocol (MCP) is an open standard for connecting AI assistant
 | 🔍 **catalog_search** | Product catalog search with filtering | Find products by description, category, or keywords |
 | 📋 **bom_calculate** | Bill of Materials calculator | Complete BOM generation for panel installations |
 | 🐛 **report_error** | Knowledge Base error logger | Report and track KB inconsistencies |
+
+#### Background Task Tools (Async)
+
+| Tool | Description | Use Case |
+|------|-------------|----------|
+| 📦 **batch_bom_calculate** | Batch BOM for multiple panels | Multi-zone projects needing BOMs for several panel types |
+| 💰 **bulk_price_check** | Bulk pricing for multiple products | Compare prices across families, build multi-product quotes |
+| 📄 **full_quotation** | Combined BOM + pricing + catalog | Complete quotation in one pass (BOM, pricing, accessories) |
+| 📊 **task_status** | Check background task progress | Poll running tasks for completion percentage |
+| 📥 **task_result** | Retrieve completed task output | Get the full result data when a task finishes |
+| 📋 **task_list** | List recent background tasks | Monitor and review task history with optional filters |
+| ❌ **task_cancel** | Cancel a pending/running task | Stop tasks that are no longer needed |
 
 ### Quick Start
 
@@ -814,6 +1055,96 @@ python -m mcp.server --transport sse --port 8000
 
 **Response:** Persists error to `corrections_log.json` for tracking and potential future automation (e.g., generating GitHub PRs via external tools; not implemented in this repository).
 
+#### 5. batch_bom_calculate (Background Task)
+
+**Purpose:** Submit multiple BOM calculations as a single background task. Ideal for multi-zone projects.
+
+**Input Schema:**
+```json
+{
+  "items": [
+    {
+      "product_family": "ISODEC",
+      "thickness_mm": 100,
+      "core_type": "EPS",
+      "usage": "techo",
+      "length_m": 12.0,
+      "width_m": 6.0
+    },
+    {
+      "product_family": "ISOPANEL",
+      "thickness_mm": 50,
+      "core_type": "EPS",
+      "usage": "pared",
+      "length_m": 8.0,
+      "width_m": 4.0
+    }
+  ]
+}
+```
+
+**Response:** Returns a `task_id` for polling with `task_status` and retrieval with `task_result`.
+
+#### 6. bulk_price_check (Background Task)
+
+**Purpose:** Look up pricing for multiple products at once.
+
+**Input Schema:**
+```json
+{
+  "queries": [
+    {"query": "ISODEC", "filter_type": "family"},
+    {"query": "ISOROOF", "filter_type": "family"},
+    {"query": "panel techo 100mm", "filter_type": "search"}
+  ]
+}
+```
+
+**Response:** Returns a `task_id` for status polling and result retrieval.
+
+#### 7. full_quotation (Background Task)
+
+**Purpose:** Generate a complete quotation combining BOM + pricing + catalog in one pass.
+
+**Input Schema:**
+```json
+{
+  "product_family": "ISODEC",
+  "thickness_mm": 100,
+  "core_type": "EPS",
+  "usage": "techo",
+  "length_m": 12.0,
+  "width_m": 6.0,
+  "client_name": "Empresa Constructora ABC",
+  "project_name": "Galpon Industrial",
+  "discount_percent": 5
+}
+```
+
+**Response:** Returns a `task_id`. The completed result includes BOM, pricing, catalog matches, and a quotation summary.
+
+#### 8. task_status / task_result / task_list / task_cancel
+
+**Purpose:** Manage background tasks.
+
+```json
+// Check status
+{"task_id": "TASK-A1B2C3D4"}
+
+// Retrieve result (only for completed tasks)
+{"task_id": "TASK-A1B2C3D4"}
+
+// List tasks (all filters optional)
+{"status": "running", "task_type": "batch_bom_calculate", "limit": 10}
+
+// Cancel a task
+{"task_id": "TASK-A1B2C3D4"}
+```
+
+**Task States:** `pending` -> `running` -> `completed` | `failed` | `cancelled`
+
+**Progress Tracking:** Running tasks include progress data (percentage, current item, items completed/total).
+
 ### Integration Paths
 
 There are two distinct integration paths in this project:
@@ -837,6 +1168,13 @@ There are two distinct integration paths in this project:
 - `mcp/tools/catalog_search.json`
 - `mcp/tools/bom_calculate.json`
 - `mcp/tools/report_error.json`
+- `mcp/tools/batch_bom_calculate.json`
+- `mcp/tools/bulk_price_check.json`
+- `mcp/tools/full_quotation.json`
+- `mcp/tools/task_status.json`
+- `mcp/tools/task_result.json`
+- `mcp/tools/task_list.json`
+- `mcp/tools/task_cancel.json`
 
 These JSON files describe MCP tools and are consumed by MCP-aware clients, not directly by OpenAI Custom GPT Actions.
 
@@ -865,12 +1203,29 @@ mcp/
 │   ├── pricing.py        # price_check handler
 │   ├── catalog.py        # catalog_search handler
 │   ├── bom.py            # bom_calculate handler
-│   └── errors.py         # report_error handler
+│   ├── errors.py         # report_error handler
+│   └── tasks.py          # Background task tool handlers (7 tools)
+├── tasks/                 # Background task processing engine
+│   ├── models.py         # Task, TaskProgress, TaskStatus, TaskType
+│   ├── manager.py        # Async task manager (submit, cancel, query)
+│   ├── workers.py        # Worker functions (batch BOM, bulk pricing, quotation)
+│   └── tests/            # 55 comprehensive tests
+│       ├── test_models.py
+│       ├── test_manager.py
+│       ├── test_workers.py
+│       └── test_handlers.py
 └── tools/                 # JSON tool schemas
     ├── price_check.json
     ├── catalog_search.json
     ├── bom_calculate.json
-    └── report_error.json
+    ├── report_error.json
+    ├── batch_bom_calculate.json
+    ├── bulk_price_check.json
+    ├── full_quotation.json
+    ├── task_status.json
+    ├── task_result.json
+    ├── task_list.json
+    └── task_cancel.json
 ```
 
 ### Additional Resources
@@ -1300,6 +1655,17 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | [IMPLEMENTATION_SUMMARY_V3.3.md](IMPLEMENTATION_SUMMARY_V3.3.md) | V3.3 changes and new features | 3.3 |
 | [EVOLUCIONADOR_FINAL_REPORT.md](EVOLUCIONADOR_FINAL_REPORT.md) | EVOLUCIONADOR completion report | 1.0.0 |
 
+### MCP Integration Documentation
+
+| Document | Description | Version |
+|----------|-------------|---------|
+| [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md) | Top 10 MCP server comparison with cost analysis | 1.0 |
+| [MCP_AGENT_ARCHITECT_PROMPT.md](MCP_AGENT_ARCHITECT_PROMPT.md) | AI agent for MCP architecture design | 1.0 |
+| [MCP_RESEARCH_PROMPT.md](MCP_RESEARCH_PROMPT.md) | Structured MCP market research prompt | 1.0 |
+| [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md) | KB files audit for MCP migration | 1.0 |
+| [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md) | KB restructuring execution prompt | 1.0 |
+| [MCP_CROSSCHECK_EVOLUTION_PLAN.md](MCP_CROSSCHECK_EVOLUTION_PLAN.md) | MCP gap analysis & execution plan | 1.0 |
+
 ### Module-Specific Documentation
 
 | Document | Description | Module |
@@ -1307,6 +1673,8 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | [openai_ecosystem/README.md](openai_ecosystem/README.md) | OpenAI API helpers usage guide | openai_ecosystem |
 | [panelin_reports/test_pdf_generation.py](panelin_reports/test_pdf_generation.py) | PDF generation test suite | panelin_reports |
 | [.evolucionador/README.md](.evolucionador/README.md) | EVOLUCIONADOR system guide | .evolucionador |
+| [docs/README.md](docs/README.md) | Complete documentation hub and index | docs |
+| [mcp/config/mcp_server_config.json](mcp/config/mcp_server_config.json) | MCP server configuration | mcp |
 
 ### Python Modules Documentation
 
@@ -1316,6 +1684,8 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | `panelin_reports/` | Professional PDF generation with BMC branding, ReportLab-based | 2.0 |
 | `openai_ecosystem/` | OpenAI API response extraction and normalization utilities | 1.0 |
 | `.evolucionador/` | Autonomous evolution agent with 7 validators, 6 optimizers, report generator | 1.0.0 |
+| `mcp/` | MCP server with 4 tools (price_check, catalog_search, bom_calculate, report_error) | 0.1.0 |
+| `panelin_mcp_integration/` | MCP integration clients for OpenAI Responses API and Wolf API wrapper | 0.1.0 |
 
 #### OpenAI Ecosystem Module
 
@@ -1657,6 +2027,20 @@ For BMC Uruguay business inquiries, contact: [BMC Uruguay](https://bmcuruguay.co
 - **Official Website**: https://bmcuruguay.com.uy
 - **API Base URL**: https://panelin-api-642127786762.us-central1.run.app
 - **OpenAI GPT Platform**: https://chat.openai.com/gpts
+- **Documentation Hub**: [docs/README.md](docs/README.md)
+
+### Archived Documentation
+
+Historical review artifacts have been moved to the `archive/` directory. These documents served their purpose during PR review and consolidation processes:
+
+- `BOOT_PRS_COMPARISON.md` - PR #15/18/19 comparison analysis
+- `BRANCH_REVIEW_REPORT.md` - Branch analysis for PR #27
+- `PULL_REQUESTS_REVIEW.md` - 9-PR overview analysis
+- `PR_REVIEW_README.md` - Navigation for review documents
+- `PR_CONSOLIDATION_ACTION_PLAN.md` - Consolidation plan
+- `README_REVIEW_SUMMARY.md` - README audit results
+
+These files are retained for historical reference but are not part of the active documentation.
 
 ---
 
