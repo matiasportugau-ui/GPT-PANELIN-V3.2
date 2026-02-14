@@ -116,7 +116,7 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
         return {"error": "product_family, usage, length_m, and width_m are required"}
     
     # Validate thickness_mm
-    if not thickness or thickness <= 0:
+    if thickness is None or thickness <= 0:
         return {
             "error": "thickness_mm is required and must be a positive number",
             "received": thickness
