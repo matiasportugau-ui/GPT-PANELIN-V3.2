@@ -39,6 +39,12 @@ from .handlers.bom import handle_bom_calculate
 from .handlers.errors import handle_report_error
 from .handlers.quotation import configure_quotation_store, handle_quotation_store
 from .storage.factory import initialize_memory_store
+from .observability import (
+    get_invocation_context,
+    log_tool_invocation_error,
+    log_tool_invocation_start,
+    log_tool_invocation_success,
+)
 
 TOOLS_DIR = Path(__file__).parent / "tools"
 
@@ -60,6 +66,12 @@ TOOL_HANDLERS = {
 }
 
 TOOL_NAMES = list(TOOL_HANDLERS.keys())
+
+
+def _estimate_token_count(payload: Any) -> int:
+    """Estimate token count using a conservative character heuristic."""
+    serialized = json.dumps(payload, ensure_ascii=False, default=str)
+    return max(1, round(len(serialized) / 4))
 
 
 def create_server() -> Any:
@@ -94,11 +106,24 @@ def create_server() -> Any:
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        context = get_invocation_context(name, arguments)
+        token_input = _estimate_token_count(arguments)
+        started_at = log_tool_invocation_start(context, token_input)
+
         handler = TOOL_HANDLERS.get(name)
         if not handler:
+            log_tool_invocation_error(context, started_at, "UNKNOWN_TOOL", token_input)
             return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
 
-        result = await handler(arguments)
+        try:
+            result = await handler(arguments)
+        except Exception as exc:  # noqa: BLE001
+            error_code = getattr(exc, "code", exc.__class__.__name__.upper())
+            log_tool_invocation_error(context, started_at, str(error_code), token_input)
+            raise
+
+        token_output = _estimate_token_count(result)
+        log_tool_invocation_success(context, started_at, token_input, token_output)
         return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, default=str))]
 
     return server
