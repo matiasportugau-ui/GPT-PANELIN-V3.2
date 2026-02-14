@@ -51,44 +51,103 @@ CATEGORY_MAP = {
 
 
 async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Execute catalog_search tool and return lightweight results."""
+    """Execute catalog_search tool and return v1 contract envelope."""
     query = arguments.get("query", "")
     category = arguments.get("category", "all")
     limit = arguments.get("limit", 5)
 
+    # Validate query parameter
     if not query:
-        return {"error": "Query parameter is required", "results": []}
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "QUERY_TOO_SHORT",
+                "message": "Query parameter is required",
+                "details": {}
+            }
+        }
+    
+    if len(query) < 2:
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "QUERY_TOO_SHORT",
+                "message": f"Query must be at least 2 characters, got {len(query)}",
+                "details": {"query": query}
+            }
+        }
 
-    catalog = _load_catalog()
-    norm_query = _normalize(query)
+    # Validate category parameter
+    valid_categories = ["techo", "pared", "camara", "accesorio", "all"]
+    if category not in valid_categories:
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "INVALID_CATEGORY",
+                "message": f"Invalid category '{category}'. Must be one of: {', '.join(valid_categories)}",
+                "details": {"category": category}
+            }
+        }
 
-    # Determine category keywords
-    category_keywords: list[str] = []
-    if category != "all" and category in CATEGORY_MAP:
-        category_keywords = CATEGORY_MAP[category]
+    try:
+        catalog = _load_catalog()
+        norm_query = _normalize(query)
 
-    results: list[dict[str, Any]] = []
-    for product in catalog:
-        title = _normalize(product.get("title", ""))
-        ptype = _normalize(product.get("product_type", ""))
-        tags = _normalize(str(product.get("tags", "")))
-        handle = _normalize(product.get("handle", ""))
-        searchable = f"{title} {ptype} {tags} {handle}"
+        # Determine category keywords
+        category_keywords: list[str] = []
+        if category != "all" and category in CATEGORY_MAP:
+            category_keywords = CATEGORY_MAP[category]
 
-        if norm_query not in searchable:
-            continue
+        results: list[dict[str, Any]] = []
+        for product in catalog:
+            title = _normalize(product.get("title", ""))
+            ptype = _normalize(product.get("product_type", ""))
+            tags = _normalize(str(product.get("tags", "")))
+            handle = _normalize(product.get("handle", ""))
+            searchable = f"{title} {ptype} {tags} {handle}"
 
-        if category_keywords:
-            if not any(kw in searchable for kw in category_keywords):
+            if norm_query not in searchable:
                 continue
 
-        results.append(_to_lightweight(product))
-        if len(results) >= limit:
-            break
+            if category_keywords:
+                if not any(kw in searchable for kw in category_keywords):
+                    continue
 
-    return {
-        "message": f"Found {len(results)} product(s) for '{query}'",
-        "results": results,
-        "source": "shopify_catalog_v1.json (Level 1.6)",
-        "total_catalog_size": len(catalog),
-    }
+            # Transform to contract schema format
+            result = {
+                "product_id": str(product.get("id", "")),
+                "name": product.get("title", ""),
+                "category": product.get("product_type", ""),
+            }
+            
+            # Add optional fields if available
+            handle_val = product.get("handle", "")
+            if handle_val:
+                result["url"] = f"https://bmcuruguay.uy/products/{handle_val}"
+            
+            # Simple relevance score based on position in search results
+            result["score"] = max(0.1, 1.0 - (len(results) * 0.05))
+            
+            results.append(result)
+            if len(results) >= limit:
+                break
+
+        return {
+            "ok": True,
+            "contract_version": "v1",
+            "results": results
+        }
+
+    except Exception as e:
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "CATALOG_UNAVAILABLE",
+                "message": f"Internal error processing catalog_search: {str(e)}",
+                "details": {}
+            }
+        }
