@@ -130,7 +130,8 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
                 result["url"] = f"https://bmcuruguay.uy/products/{handle_val}"
             
             # Simple relevance score based on position in search results
-            result["score"] = max(0.1, 1.0 - (len(results) * 0.05))
+            # Score decreases linearly from 1.0 to 0.1 as more results are added
+            result["score"] = min(1.0, max(0.1, 1.0 - (len(results) * 0.05)))
             
             results.append(result)
             if len(results) >= limit:
