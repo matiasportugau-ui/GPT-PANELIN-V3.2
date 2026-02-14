@@ -7,9 +7,12 @@ panel installation. Applies parametric rules per construction system.
 from __future__ import annotations
 
 import json
+import logging
 import math
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 KB_ROOT = Path(__file__).resolve().parent.parent.parent
 BOM_FILE = KB_ROOT / "bom_rules.json"
@@ -104,6 +107,7 @@ def _get_autoportancia(
 
 async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
     """Execute bom_calculate tool and return BOM breakdown in v1 contract format."""
+    """Execute bom_calculate tool and return v1 contract envelope."""
     family = arguments.get("product_family", "")
     thickness = arguments.get("thickness_mm", 0)
     core = arguments.get("core_type", "EPS")
@@ -114,6 +118,7 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
 
     # Validate required parameters
     if not family or not usage or not length or not width:
+    if not family or not usage:
         return {
             "ok": False,
             "contract_version": "v1",
@@ -121,17 +126,58 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
                 "code": "INVALID_DIMENSIONS",
                 "message": "product_family, usage, length_m, and width_m are required",
                 "details": {"family": family, "usage": usage, "length": length, "width": width}
+                "message": "product_family and usage are required",
+                "details": {"family": family, "usage": usage}
             }
         }
     
-    # Validate thickness_mm
-    if not thickness or thickness <= 0:
+    if not length or length <= 0 or not width or width <= 0:
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "INVALID_DIMENSIONS",
+                "message": "length_m and width_m must be positive numbers",
+                "details": {"length_m": length, "width_m": width}
+            }
+        }
+    
+    if (
+        not length
+        or length <= 0
+        or length > 30
+        or not width
+        or width <= 0
+        or width > 20
+    ):
         return {
             "ok": False,
             "contract_version": "v1",
             "error": {
                 "code": "INVALID_THICKNESS",
                 "message": "thickness_mm is required and must be a positive number",
+                "details": {"received": thickness}
+            }
+        }
+    
+    if thickness < 30 or thickness > 250:
+                "code": "INVALID_DIMENSIONS",
+                "message": "length_m must be > 0 and <= 30; width_m must be > 0 and <= 20",
+                "details": {"length_m": length, "width_m": width}
+            }
+        }
+    
+    # Validate thickness_mm (contract requires 30..250)
+    if not thickness or thickness < 30 or thickness > 250:
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "INVALID_THICKNESS",
+                "message": "thickness_mm is required and must be a positive number",
+                "message": f"Thickness {thickness}mm is out of valid range (30-250mm)",
+                "details": {"received": thickness, "min": 30, "max": 250}
+                "message": "thickness_mm must be between 30 and 250 mm",
                 "details": {"thickness_mm": thickness}
             }
         }
@@ -213,6 +259,45 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
                 "subtotal_usd_iva_inc": 0.0
             }
         ]
+        # Build BOM items in contract format
+        items = []
+        
+        # Panel item (SKU would need to be looked up from pricing data in real implementation)
+        # NOTE: Using placeholder SKU format and zero prices. Real implementation would require
+        # integration with pricing handler to look up actual SKU and price data.
+        panel_sku = f"{family}_{core}_{int(thickness)}mm"
+        panel_unit_price = 0.0  # Placeholder - would need price lookup
+        panel_subtotal = panel_unit_price * qty_panels
+        
+        items.append({
+            "item_type": "panel",
+            "sku": panel_sku,
+            "quantity": qty_panels,
+            "unit": "panel",
+            "unit_price_usd_iva_inc": panel_unit_price,
+            "subtotal_usd_iva_inc": panel_subtotal
+        })
+        
+        # Fixation/support items
+        if n_supports > 0:
+            # NOTE: Using fallback SKU if not found in system configuration.
+            # Real implementation should ensure all system configs include valid soporte_sku.
+            support_sku = system.get("soporte_sku", "SUPPORT_GENERIC")
+            support_unit_price = 0.0  # Placeholder
+            support_subtotal = support_unit_price * n_supports
+            
+            items.append({
+                "item_type": "fixation",
+                "sku": support_sku,
+                "quantity": n_supports,
+                "unit": "unit",
+                "unit_price_usd_iva_inc": support_unit_price,
+                "subtotal_usd_iva_inc": support_subtotal
+            })
+        
+        # Calculate total
+        # NOTE: Total will be 0.0 until price lookup is implemented
+        total_usd = sum(item["subtotal_usd_iva_inc"] for item in items)
 
         return {
             "ok": True,
@@ -221,9 +306,48 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
                 "area_m2": area_m2,
                 "panel_count": qty_panels,
                 "total_usd_iva_inc": 0.0  # Sum of item subtotals (currently 0 pending pricing integration)
+                "total_usd_iva_inc": total_usd
             },
             "items": items
         }
+    
+    except Exception as e:
+
+        if not system_key:
+            return {
+                "ok": False,
+                "contract_version": "v1",
+                "error": {
+                    "code": "RULE_NOT_FOUND",
+                    "message": f"No BOM rules found for {family} {core} {usage}",
+                    "details": {
+                        "family": family,
+                        "core": core,
+                        "usage": usage,
+                        "hint": "Valid systems: techo_isoroof_3g, techo_isodec_eps, techo_isodec_pir, pared_isopanel_eps, pared_isowall_pir, pared_isofrig_pir"
+                    }
+                }
+            }
+
+        # Look up system rules
+        systems = rules.get("sistemas", rules.get("systems", {}))
+        system = systems.get(system_key)
+
+        if not system:
+            return {
+                "ok": False,
+                "contract_version": "v1",
+                "error": {
+                    "code": "RULE_NOT_FOUND",
+                    "message": f"System '{system_key}' not found in bom_rules.json",
+                    "details": {"system_key": system_key, "available_systems": list(systems.keys())}
+                }
+            }
+
+        # Basic panel calculation
+        panel_width_m = 1.0  # Default useful width in meters (most panels are ~1m useful)
+        if qty_panels is None:
+            qty_panels = max(1, int(length / panel_width_m + 0.5))
 
     except Exception as e:
         return {
@@ -233,5 +357,50 @@ async def handle_bom_calculate(arguments: dict[str, Any]) -> dict[str, Any]:
                 "code": "INTERNAL_ERROR",
                 "message": f"Internal error during BOM calculation: {str(e)}",
                 "details": {"exception_type": type(e).__name__}
+            }
+        }
+        area_m2 = length * width
+        
+        # Calculate supports using correct formula: ROUNDUP((length_m / autoportancia) + 1)
+        # Use producto_ref from system to avoid duplicating mapping logic
+        producto_ref = system.get("producto_ref")
+        autoportancia = _get_autoportancia(family, core, thickness, producto_ref=producto_ref)
+        
+        if autoportancia and autoportancia > 0:
+            # Formula from quotation_calculator_v3.py:414-427 and bom_rules.json
+            n_supports = max(2, math.ceil((length / autoportancia) + 1))
+            support_note = f"Calculated from length ({length}m) / autoportancia ({autoportancia}m)"
+        else:
+            # Fallback if autoportancia not found
+            n_supports = max(2, math.ceil(length / 3.0) + 1)  # Conservative fallback: 3m span
+            support_note = f"Fallback estimate (autoportancia not found for {family} {core} {int(thickness)}mm)"
+
+        return {
+            "ok": True,
+            "contract_version": "v1",
+            "system": system_key,
+            "product": f"{family} {core} {int(thickness)}mm",
+            "dimensions": {"length_m": length, "width_m": width, "area_m2": area_m2},
+            "panels": {"quantity": qty_panels, "note": "Verify against useful panel width from KB"},
+            "supports": n_supports,
+            "supports_note": support_note,
+            "bom_rules_applied": system,
+            "source": "bom_rules.json (Level 1.3) + accessories_catalog.json (Level 1.2)",
+            "note": "This is a parametric estimate. Final BOM should be validated against KB formulas in BMC_Base_Conocimiento_GPT-2.json.",
+        }
+
+    except Exception:
+        # Log the full exception for debugging
+        logger.exception("Error processing bom_calculate request")
+        
+        return {
+            "ok": False,
+            "contract_version": "v1",
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Internal error during BOM calculation: {str(e)}",
+                "details": {"exception_type": type(e).__name__}
+                "message": "Internal error processing bom_calculate request",
+                "details": {}
             }
         }
