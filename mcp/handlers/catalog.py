@@ -117,18 +117,18 @@ async def handle_catalog_search(arguments: dict[str, Any]) -> dict[str, Any]:
                 if not any(kw in searchable for kw in category_keywords):
                     continue
 
-            # Transform to contract schema format
+            # Transform to contract schema format, using the lightweight helper as the base
+            lightweight = _to_lightweight(product)
             result = {
-                "product_id": str(product.get("id", "")),
-                "name": product.get("title", ""),
-                "category": product.get("product_type", ""),
+                "product_id": str(lightweight.get("id", "")),
+                "name": lightweight.get("title", ""),
+                "category": lightweight.get("type", ""),
             }
-            
+
             # Add optional fields if available
-            handle_val = product.get("handle", "")
+            handle_val = lightweight.get("handle", "") or ""
             if handle_val:
                 result["url"] = f"https://bmcuruguay.uy/products/{handle_val}"
-            
             # Simple relevance score based on position in search results
             # Score decreases linearly from 1.0 to 0.1 as more results are added
             result["score"] = min(1.0, max(0.1, 1.0 - (len(results) * 0.05)))
