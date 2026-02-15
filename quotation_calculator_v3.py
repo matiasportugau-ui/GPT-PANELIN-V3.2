@@ -12,7 +12,7 @@ CRITICAL ARCHITECTURE PRINCIPLE:
 - Results include 'calculation_verified: True' flag to ensure LLM didn't calculate
 
 NEW IN V3.1:
-- Autoportancia (span/load) validation with 15% safety margin
+- Autoportancia (span/load) validation against exact manufacturer nominal limits (no safety margin)
 - Validates 4 product families, ~15 thickness configurations
 - Intelligent recommendations when limits exceeded
 - Optional validation parameter (non-breaking enhancement)
@@ -204,20 +204,21 @@ def validate_autoportancia(
     product_family: str,
     thickness_mm: int,
     span_m: float,
-    safety_margin: float = 0.15
+    safety_margin: float = 0.0
 ) -> AutoportanciaValidationResult:
     """
     Validate if requested span is within panel autoportancia limits.
     
     Autoportancia (self-supporting capacity) defines the maximum distance between
     supports (correas/vigas) that a panel can safely span. This function checks
-    if the requested span exceeds structural limits.
+    if the requested span exceeds structural limits against the exact manufacturer
+    nominal limits (no safety margin by default).
     
     Args:
         product_family: Product family name (ISODEC_EPS, ISODEC_PIR, ISOROOF_3G, ISOPANEL_EPS)
         thickness_mm: Panel thickness in millimeters (50, 80, 100, 150, 200, 250)
         span_m: Requested distance between supports in meters
-        safety_margin: Safety factor as decimal (default 0.15 = 15% margin)
+        safety_margin: Safety factor as decimal (default 0.0 = no margin, validates against nominal table)
     
     Returns:
         AutoportanciaValidationResult with validation status and recommendations
@@ -225,7 +226,7 @@ def validate_autoportancia(
     Example:
         >>> result = validate_autoportancia("ISODEC_EPS", 100, 5.0)
         >>> print(result['is_valid'])  # True
-        >>> print(result['span_max_safe_m'])  # 4.675 (5.5m * 0.85)
+        >>> print(result['span_max_safe_m'])  # 5.5 (exact nominal capacity for 100mm)
         
         >>> result = validate_autoportancia("ISODEC_EPS", 100, 8.0)
         >>> print(result['is_valid'])  # False
@@ -285,10 +286,11 @@ def validate_autoportancia(
         alternative_thicknesses.sort()
         
         # Build recommendation message
+        margin_text = f" (with {int(safety_margin*100)}% safety margin)" if safety_margin > 0 else ""
         recommendation = (
-            f"⚠️  SPAN EXCEEDS SAFE LIMIT: Requested span of {span_m:.1f}m exceeds the safe "
+            f"⚠️  SPAN EXCEEDS NOMINAL AUTOPORTANCIA: Requested span of {span_m:.1f}m exceeds the nominal "
             f"autoportancia of {span_max_safe_m:.1f}m for {family_key} {thickness_mm}mm "
-            f"(maximum {luz_max_m:.1f}m with {int(safety_margin*100)}% safety margin). "
+            f"(maximum {luz_max_m:.1f}m{margin_text}). "
         )
         
         if alternative_thicknesses:
@@ -303,8 +305,9 @@ def validate_autoportancia(
     else:
         # Valid but provide informational message
         margin_used_pct = (span_m / luz_max_m) * 100.0
+        margin_text = f" (with {int(safety_margin*100)}% safety margin)" if safety_margin > 0 else ""
         recommendation = (
-            f"✓ Span validation PASSED: {span_m:.1f}m ≤ {span_max_safe_m:.1f}m safe limit "
+            f"✓ Span validation PASSED: {span_m:.1f}m ≤ {span_max_safe_m:.1f}m within nominal capacity{margin_text} "
             f"(max {luz_max_m:.1f}m, using {margin_used_pct:.1f}% of absolute capacity)"
         )
     
@@ -687,7 +690,7 @@ def calculate_panel_quote(
             product_family=product["family"],
             thickness_mm=product["thickness_mm"],
             span_m=length_m,
-            safety_margin=0.15
+            safety_margin=0.0
         )
     
     # === DETERMINISTIC CALCULATIONS WITH DECIMAL ===
