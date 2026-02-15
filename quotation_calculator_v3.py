@@ -128,7 +128,13 @@ class QuotationResult(TypedDict):
 
 def _load_knowledge_base() -> dict:
     """Load the single source of truth knowledge base"""
+    # Try config directory first
     kb_path = Path(__file__).parent.parent / "config" / "panelin_truth_bmcuruguay.json"
+    
+    if not kb_path.exists():
+        # Try root directory with version suffix
+        kb_path = Path(__file__).parent / "panelin_truth_bmcuruguay_web_only_v2.json"
+    
     if not kb_path.exists():
         raise FileNotFoundError(f"Knowledge base not found at {kb_path}")
     
@@ -154,7 +160,12 @@ def _load_accessories_catalog() -> dict:
     if _ACCESSORIES_CATALOG_CACHE is not None:
         return _ACCESSORIES_CATALOG_CACHE
     
+    # Try organized KB structure first, then fall back to root
     catalog_path = Path(__file__).parent.parent / "01_KNOWLEDGE_BASE" / "Level_1_2_Accessories" / "accessories_catalog.json"
+    
+    if not catalog_path.exists():
+        # Fallback to root directory
+        catalog_path = Path(__file__).parent / "accessories_catalog.json"
     
     if not catalog_path.exists():
         raise FileNotFoundError(f"Accessories catalog not found at {catalog_path}")
@@ -178,7 +189,12 @@ def _load_bom_rules() -> dict:
     if _BOM_RULES_CACHE is not None:
         return _BOM_RULES_CACHE
     
+    # Try organized KB structure first, then fall back to root
     rules_path = Path(__file__).parent.parent / "01_KNOWLEDGE_BASE" / "Level_1_3_BOM_Rules" / "bom_rules.json"
+    
+    if not rules_path.exists():
+        # Fallback to root directory
+        rules_path = Path(__file__).parent / "bom_rules.json"
     
     if not rules_path.exists():
         raise FileNotFoundError(f"BOM rules not found at {rules_path}")
@@ -784,6 +800,19 @@ def calculate_panel_quote(
     # Grand total
     grand_total = _decimal_round(total + accessories_total)
     
+    # Check for waste optimization opportunities
+    optimization_suggestion = suggest_optimization(
+        product_id=product_id,
+        length_m=length_m,
+        width_m=width_m,
+        quantity=quantity,
+        waste_threshold_pct=5.0
+    )
+    
+    # Add optimization suggestion to notes if applicable
+    if optimization_suggestion:
+        cutting_notes.append(optimization_suggestion["message"])
+    
     # Generate quotation ID
     import uuid
     from datetime import datetime
@@ -823,6 +852,103 @@ def calculate_panel_quote(
         currency="USD",
         notes=cutting_notes  # Include cutting notes
     )
+
+
+def suggest_optimization(
+    product_id: str,
+    length_m: float,
+    width_m: float,
+    quantity: int = 1,
+    waste_threshold_pct: float = 5.0,
+) -> Optional[dict]:
+    """
+    Detect if material waste (offcut) exceeds the given threshold and suggest
+    an optimized panel length that reduces waste.
+
+    The function compares the requested length against the panel's standard
+    production lengths (or minimum increments) to find a shorter length that
+    would keep waste below the threshold.
+
+    Args:
+        product_id: Product ID (e.g., "ISOPANEL_EPS_50mm")
+        length_m: Requested panel length in meters
+        width_m: Total width to cover in meters
+        quantity: Number of panels/installations
+        waste_threshold_pct: Maximum acceptable waste percentage (default 5%)
+
+    Returns:
+        dict with optimization suggestion if waste exceeds threshold, None otherwise.
+        The dict contains:
+        - "waste_pct": current waste percentage
+        - "suggested_length_m": optimized length
+        - "savings_m2": area saved
+        - "savings_usd": estimated USD saved
+        - "message": human-readable suggestion in Spanish
+    """
+    # Look up the product specs
+    product = lookup_product_specs(product_id=product_id)
+    if not product:
+        return None
+    
+    # Calculate panels needed based on width coverage
+    panels_needed = calculate_panels_needed(width_m, product["ancho_util_m"])
+    
+    # Calculate total ordered area (what we're actually buying)
+    total_area = length_m * panels_needed * quantity * product["ancho_util_m"]
+    
+    # Calculate effective/useful area (what we actually need to cover)
+    useful_area = length_m * width_m * quantity
+    
+    # Compute waste percentage
+    waste_pct = ((total_area - useful_area) / total_area) * 100.0
+    
+    # If waste is within acceptable threshold, no optimization needed
+    if waste_pct <= waste_threshold_pct:
+        return None
+    
+    # Try to find optimized length by reducing in 5cm steps
+    # We need to ensure we still cover the width
+    suggested_length_m = length_m
+    step_m = 0.05  # 5cm steps
+    
+    # Try reducing length while ensuring we can still cover the width
+    for test_length in [length_m - (i * step_m) for i in range(1, int(length_m / step_m))]:
+        if test_length < product["largo_min_m"]:
+            break
+        
+        # Recalculate with test length
+        test_total_area = test_length * panels_needed * quantity * product["ancho_util_m"]
+        test_useful_area = test_length * width_m * quantity
+        test_waste_pct = ((test_total_area - test_useful_area) / test_total_area) * 100.0
+        
+        # Check if this brings waste below threshold
+        if test_waste_pct <= waste_threshold_pct:
+            suggested_length_m = test_length
+            break
+    
+    # If we couldn't find a better length, return None
+    if suggested_length_m == length_m:
+        return None
+    
+    # Calculate savings
+    savings_m2 = (length_m - suggested_length_m) * panels_needed * quantity * product["ancho_util_m"]
+    savings_usd = savings_m2 * product["price_per_m2"]
+    delta_cm = (length_m - suggested_length_m) * 100
+    
+    # Generate Spanish message
+    message = (
+        f"SUGERENCIA: Reducir largo en {delta_cm:.0f} cm "
+        f"(de {length_m:.2f}m a {suggested_length_m:.2f}m) "
+        f"ahorra {savings_usd:.2f} USD ({savings_m2:.2f} m² menos de desperdicio)."
+    )
+    
+    return {
+        "waste_pct": waste_pct,
+        "suggested_length_m": suggested_length_m,
+        "savings_m2": savings_m2,
+        "savings_usd": savings_usd,
+        "message": message
+    }
 
 
 def validate_quotation(result: QuotationResult) -> tuple[bool, List[str]]:
