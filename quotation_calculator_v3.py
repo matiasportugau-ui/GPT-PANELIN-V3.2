@@ -377,6 +377,27 @@ def validate_autoportancia(
     )
 
 
+def _product_to_specs(product_id: str, p: dict) -> ProductSpecs:
+    """Convert product dict to ProductSpecs TypedDict.
+    
+    Helper function to avoid code duplication in lookup_product_specs.
+    """
+    return ProductSpecs(
+        product_id=product_id,
+        name=p["name"],
+        family=p["family"],
+        sub_family=p["sub_family"],
+        thickness_mm=p["thickness_mm"],
+        price_per_m2=p["price_per_m2"],
+        currency=p["currency"],
+        ancho_util_m=p["ancho_util_m"],
+        largo_min_m=p["largo_min_m"],
+        largo_max_m=p["largo_max_m"],
+        autoportancia_m=p["autoportancia_m"],
+        stock_status=p["stock_status"]
+    )
+
+
 def lookup_product_specs(
     product_id: Optional[str] = None,
     family: Optional[str] = None,
@@ -408,21 +429,7 @@ def lookup_product_specs(
     # Direct lookup by product_id - if specified, must match exactly
     if product_id:
         if product_id in products:
-            p = products[product_id]
-            return ProductSpecs(
-                product_id=product_id,
-                name=p["name"],
-                family=p["family"],
-                sub_family=p["sub_family"],
-                thickness_mm=p["thickness_mm"],
-                price_per_m2=p["price_per_m2"],
-                currency=p["currency"],
-                ancho_util_m=p["ancho_util_m"],
-                largo_min_m=p["largo_min_m"],
-                largo_max_m=p["largo_max_m"],
-                autoportancia_m=p["autoportancia_m"],
-                stock_status=p["stock_status"]
-            )
+            return _product_to_specs(product_id, products[product_id])
         else:
             # product_id was specified but not found - return None
             return None
@@ -438,39 +445,10 @@ def lookup_product_specs(
             app_lower = application.lower()
             for pid in candidate_ids:
                 if app_lower in _PRODUCT_INDEX_CACHE["normalized_applications"].get(pid, []):
-                    p = products[pid]
-                    return ProductSpecs(
-                        product_id=pid,
-                        name=p["name"],
-                        family=p["family"],
-                        sub_family=p["sub_family"],
-                        thickness_mm=p["thickness_mm"],
-                        price_per_m2=p["price_per_m2"],
-                        currency=p["currency"],
-                        ancho_util_m=p["ancho_util_m"],
-                        largo_min_m=p["largo_min_m"],
-                        largo_max_m=p["largo_max_m"],
-                        autoportancia_m=p["autoportancia_m"],
-                        stock_status=p["stock_status"]
-                    )
+                    return _product_to_specs(pid, products[pid])
         elif candidate_ids:
             # No application filter, return first match
-            pid = candidate_ids[0]
-            p = products[pid]
-            return ProductSpecs(
-                product_id=pid,
-                name=p["name"],
-                family=p["family"],
-                sub_family=p["sub_family"],
-                thickness_mm=p["thickness_mm"],
-                price_per_m2=p["price_per_m2"],
-                currency=p["currency"],
-                ancho_util_m=p["ancho_util_m"],
-                largo_min_m=p["largo_min_m"],
-                largo_max_m=p["largo_max_m"],
-                autoportancia_m=p["autoportancia_m"],
-                stock_status=p["stock_status"]
-            )
+            return _product_to_specs(candidate_ids[0], products[candidate_ids[0]])
     
     # Fallback to linear search if index can't be used
     normalized_app = application.lower() if application else None
@@ -485,20 +463,7 @@ def lookup_product_specs(
                 match = False
         
         if match:
-            return ProductSpecs(
-                product_id=pid,
-                name=p["name"],
-                family=p["family"],
-                sub_family=p["sub_family"],
-                thickness_mm=p["thickness_mm"],
-                price_per_m2=p["price_per_m2"],
-                currency=p["currency"],
-                ancho_util_m=p["ancho_util_m"],
-                largo_min_m=p["largo_min_m"],
-                largo_max_m=p["largo_max_m"],
-                autoportancia_m=p["autoportancia_m"],
-                stock_status=p["stock_status"]
-            )
+            return _product_to_specs(pid, p)
     
     return None
 

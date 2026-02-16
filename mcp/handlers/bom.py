@@ -6,6 +6,7 @@ panel installation. Applies parametric rules per construction system.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import math
@@ -398,8 +399,6 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         # communication while maintaining backwards compatibility at the API boundary.
         
         # Parallelize SKU candidate price checks using asyncio.gather()
-        import asyncio
-        
         async def fetch_price(sku: str) -> tuple[str, dict | None]:
             """Fetch price for a single SKU candidate."""
             try:
