@@ -117,6 +117,11 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
     
     Returns:
         v1 contract envelope: {ok, contract_version, items, summary} or {ok, contract_version, error}
+        arguments: Tool arguments containing product_family, thickness_mm, core_type, usage, dimensions
+        legacy_format: If True, return legacy format for backwards compatibility
+    
+    Returns:
+        v1 contract envelope: {ok, contract_version, summary, items} or {ok, contract_version, error}
     """
     family = arguments.get("product_family", "")
     thickness = arguments.get("thickness_mm", 0)
@@ -462,64 +467,3 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
             return {"error": f"Internal error: {str(e)}"}
         logger.exception("Internal error during BOM calculation")
         return error_response
-    area_m2 = length * width
-    
-    # Calculate supports using correct formula: ROUNDUP((length_m / autoportancia) + 1)
-    # Use producto_ref from system to avoid duplicating mapping logic
-    producto_ref = system.get("producto_ref")
-    autoportancia = _get_autoportancia(family, core, thickness, producto_ref=producto_ref)
-    
-    if autoportancia and autoportancia > 0:
-        # Formula from quotation_calculator_v3.py:414-427 and bom_rules.json
-        n_supports = max(2, math.ceil((length / autoportancia) + 1))
-    else:
-        # Fallback if autoportancia not found
-        n_supports = max(2, math.ceil(length / 3.0) + 1)  # Conservative fallback: 3m span
-
-    # Build items list (simplified - using placeholder pricing)
-    items = []
-    
-    # Panel item
-    # TODO: Replace placeholder pricing with actual lookup from bromyros_pricing_master.json
-    panel_sku = f"{family}-{core}-{int(thickness)}mm"
-    panel_unit_price = 50.0  # Placeholder - should be looked up from pricing
-    panel_subtotal = qty_panels * panel_unit_price
-    
-    items.append({
-        "item_type": "panel",
-        "sku": panel_sku,
-        "quantity": qty_panels,
-        "unit": "panel",
-        "unit_price_usd_iva_inc": panel_unit_price,
-        "subtotal_usd_iva_inc": panel_subtotal
-    })
-    
-    # Support/fixation item
-    if n_supports > 0:
-        # TODO: Replace placeholder pricing with actual lookup from accessories_catalog.json
-        support_sku = f"SUPPORT-{system_key}"
-        support_unit_price = 10.0  # Placeholder - should be looked up from accessories catalog
-        support_subtotal = n_supports * support_unit_price
-        
-        items.append({
-            "item_type": "fixation",
-            "sku": support_sku,
-            "quantity": n_supports,
-            "unit": "unit",
-            "unit_price_usd_iva_inc": support_unit_price,
-            "subtotal_usd_iva_inc": support_subtotal
-        })
-    
-    # Calculate total
-    total_usd = sum(item["subtotal_usd_iva_inc"] for item in items)
-
-    return {
-        "ok": True,
-        "contract_version": "v1",
-        "summary": {
-            "area_m2": area_m2,
-            "panel_count": qty_panels,
-            "total_usd_iva_inc": total_usd
-        },
-        "items": items
-    }

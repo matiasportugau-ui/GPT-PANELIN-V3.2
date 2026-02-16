@@ -172,39 +172,6 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
             return {"error": f"Failed to load catalog: {str(e)}", "results": []}
         logger.debug("Wrapped catalog_search error response in v1 envelope")
         return error_response
-    
-    if not query:
-        return {
-            "ok": False,
-            "contract_version": "v1",
-            "error": {
-                "code": "QUERY_TOO_SHORT",
-                "message": "Query parameter is required",
-                "details": {}
-            }
-        }
-    
-    if len(query) < 2:
-        return {
-            "ok": False,
-            "contract_version": "v1",
-            "error": {
-                "code": "QUERY_TOO_SHORT",
-                "message": "Query must be at least 2 characters long",
-                "details": {"query": query}
-            }
-        }
-    
-    if category not in ["techo", "pared", "camara", "accesorio", "all"]:
-        return {
-            "ok": False,
-            "contract_version": "v1",
-            "error": {
-                "code": "INVALID_CATEGORY",
-                "message": f"Invalid category: {category}",
-                "details": {"category": category, "valid_categories": ["techo", "pared", "camara", "accesorio", "all"]}
-            }
-        }
 
     catalog = _load_catalog()
     norm_query = _normalize(query)
