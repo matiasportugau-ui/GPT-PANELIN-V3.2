@@ -37,7 +37,6 @@ class PanelinMCPResponsesAPI:
             "authorization": self.wolf_api_key,
             "require_approval": {
                 "never": {
-                    "tool_names": ["find_products", "get_product_price", "check_availability"]
                     "tool_names": ["find_products", "get_product_price", "check_availability", "lookup_customer"]
                 },
                 "always": {
@@ -56,7 +55,6 @@ class PanelinMCPResponsesAPI:
             input=f"""
                 Search for construction panels matching this query: {query}
                 Use the find_products function to search. Max results: {max_results}
-                """
             """
         )
 
@@ -94,7 +92,6 @@ class PanelinMCPResponsesAPI:
                 - Product: {product_id}
                 - Quantity needed: {quantity_m2} m²
                 Use check_availability function
-                """
             """
         )
 
@@ -147,7 +144,7 @@ class PanelinMCPResponsesAPI:
                 
                 Use the calculate_quote function to get the final pricing.
                 Present the quotation details clearly.
-                """
+            """
         )
 
         # Check for approval request
