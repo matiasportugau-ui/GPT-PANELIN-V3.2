@@ -153,7 +153,7 @@ mcp/
 
 **Status:** Fully implemented, production-ready, completely undocumented in README
 
-**Location:** `mcp/handlers/governance.py` (435 lines)
+**Location:** `mcp/handlers/governance.py` (524 lines)
 
 **Capabilities:**
 - `validate_correction`: Enterprise-grade change validation against pricing index
