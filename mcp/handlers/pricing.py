@@ -179,7 +179,6 @@ async def handle_price_check(arguments: dict[str, Any], legacy_format: bool = Fa
     # Validate filter_type (must be one of allowed values per contract)
     allowed_filter_types = ["sku", "family", "type", "search"]
     if filter_type not in allowed_filter_types:
-
         error_response = {
             "ok": False,
             "contract_version": CONTRACT_VERSION,
