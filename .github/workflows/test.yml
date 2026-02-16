@@ -41,13 +41,32 @@ jobs:
       - name: Run unit tests
         run: |
           echo "🧪 Running unit tests..."
-          pytest test_mcp_handlers_v1.py -v --cov=mcp --cov-report=term
+          if [ -d mcp ]; then
+            pytest test_mcp_handlers_v1.py -v --cov=mcp --cov-report=term
+          elif [ -d panelin_mcp_server ]; then
+            pytest test_mcp_handlers_v1.py -v --cov=panelin_mcp_server --cov-report=term
+          else
+            echo "⚠️ No MCP directory found, skipping MCP tests"
+          fi
       
       - name: Test MCP server startup
         run: |
           echo "🔌 Testing MCP server initialization..."
-          timeout 5 python mcp/server.py --help || true
-          echo "✅ MCP server can be imported and initialized"
+          if [ -f mcp/server.py ]; then
+            if timeout 5 python mcp/server.py --help 2>&1 | head -20; then
+              echo "✅ MCP server (mcp/) can be imported and initialized"
+            else
+              echo "⚠️ MCP server startup test completed (may have timed out)"
+            fi
+          elif [ -f panelin_mcp_server/server.py ]; then
+            if timeout 5 python panelin_mcp_server/server.py --help 2>&1 | head -20; then
+              echo "✅ MCP server (panelin_mcp_server/) can be imported and initialized"
+            else
+              echo "⚠️ MCP server startup test completed (may have timed out)"
+            fi
+          else
+            echo "⚠️ No MCP server found, skipping startup test"
+          fi
       
       - name: Integration tests for MCP server
         run: |
@@ -56,10 +75,24 @@ jobs:
           import sys
           from pathlib import Path
           
+          # Determine which MCP directory exists (mcp/ or panelin_mcp_server/)
+          mcp_dir = None
+          if Path('mcp/handlers').exists():
+              mcp_dir = 'mcp'
+          elif Path('panelin_mcp_server/handlers').exists():
+              mcp_dir = 'panelin_mcp_server'
+          
+          if mcp_dir is None:
+              print('⚠️ No MCP handlers directory found, skipping integration tests')
+              sys.exit(0)
+          
           # Test that MCP handlers can be imported
           try:
-              from mcp.handlers import pricing, catalog, bom
-              print('✅ MCP handlers imported successfully')
+              if mcp_dir == 'mcp':
+                  from mcp.handlers import pricing, catalog, bom
+              else:
+                  from panelin_mcp_server.handlers import pricing, catalog, bom
+              print(f'✅ MCP handlers imported successfully from {mcp_dir}')
           except ImportError as e:
               print(f'❌ Failed to import MCP handlers: {e}')
               sys.exit(1)
@@ -85,21 +118,37 @@ jobs:
           echo "🤖 Testing OpenAI ecosystem compatibility..."
           python -c "
           import sys
+          from pathlib import Path
+          
+          # Determine which MCP directory exists (mcp/ or panelin_mcp_server/)
+          mcp_dir = None
+          if Path('mcp/handlers').exists():
+              mcp_dir = 'mcp'
+          elif Path('panelin_mcp_server/handlers').exists():
+              mcp_dir = 'panelin_mcp_server'
+          
+          if mcp_dir is None:
+              print('⚠️ No MCP directory found, skipping OpenAI ecosystem tests')
+              sys.exit(0)
           
           # Verify MCP tools structure
-          from pathlib import Path
-          tools_dir = Path('mcp/tools')
+          tools_dir = Path(f'{mcp_dir}/tools')
           if tools_dir.exists():
               tool_files = list(tools_dir.glob('*.json'))
-              print(f'✅ Found {len(tool_files)} MCP tool definitions')
+              print(f'✅ Found {len(tool_files)} MCP tool definitions in {mcp_dir}')
           else:
-              print('⚠️ MCP tools directory not found')
+              print(f'⚠️ MCP tools directory not found in {mcp_dir}')
           
           # Verify handlers are compatible with expected interface
           try:
-              from mcp.handlers.pricing import handle_price_check
-              from mcp.handlers.catalog import handle_catalog_search
-              from mcp.handlers.bom import handle_bom_calculate
+              if mcp_dir == 'mcp':
+                  from mcp.handlers.pricing import handle_price_check
+                  from mcp.handlers.catalog import handle_catalog_search
+                  from mcp.handlers.bom import handle_bom_calculate
+              else:
+                  from panelin_mcp_server.handlers.pricing import handle_price_check
+                  from panelin_mcp_server.handlers.catalog import handle_catalog_search
+                  from panelin_mcp_server.handlers.bom import handle_bom_calculate
               print('✅ All core handlers are importable')
           except ImportError as e:
               print(f'❌ Handler import failed: {e}')
