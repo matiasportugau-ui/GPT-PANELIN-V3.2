@@ -1521,7 +1521,39 @@ configure_quotation_store(
 
 **🚀 For fast deployment, we provide automated helper tools:**
 
-#### Option 1: GitHub Actions + Claude Computer Use (Maximum Automation) ⭐ NEW
+#### Option 1: Claude Desktop with Auto-Start (Maximum Automation) ⭐ NEWEST
+
+**Fully automated - Claude starts deployment when you open it:**
+
+**Setup (one-time, 5 minutes):**
+```bash
+# Install MCP server for Claude Desktop
+python setup_claude_mcp.py
+```
+
+**Usage (every time):**
+```
+1. Open Claude Desktop
+2. Say: "Deploy the GPT"
+3. Claude handles everything automatically
+4. Approve final publication
+5. Done! (~5 minutes total)
+```
+
+**What happens automatically:**
+- ✅ Claude has deployment tools loaded on startup
+- ✅ Checks configuration status automatically
+- ✅ Generates config if needed
+- ✅ Uses Computer Use to deploy
+- ✅ No manual file management needed
+
+**Time:** ~5 minutes (one command + supervision)
+**Cost:** ~$0.45 per deployment (Claude API)
+**Prerequisites:** Claude Desktop
+
+See [CLAUDE_MCP_SETUP_GUIDE.md](CLAUDE_MCP_SETUP_GUIDE.md) for complete setup instructions and [CLAUDE_COMPUTER_USE_AUTOMATION.md](CLAUDE_COMPUTER_USE_AUTOMATION.md) for advanced usage.
+
+#### Option 2: GitHub Actions + Claude Computer Use (High Automation)
 
 **Most automated approach using AI-powered browser automation:**
 
