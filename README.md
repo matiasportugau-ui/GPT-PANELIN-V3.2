@@ -1521,10 +1521,40 @@ configure_quotation_store(
 
 **🚀 For fast deployment, we provide automated helper tools:**
 
+#### Option 1: Autoconfiguration (Recommended)
+
+**Generate complete deployment-ready configuration with approval workflow:**
+
+```bash
+# Run autoconfiguration tool
+python autoconfig_gpt.py
+
+# Review configuration summary
+# Type 'yes' to approve
+
+# Navigate to generated package
+cd GPT_Deploy_Package
+
+# Follow deployment guide
+cat DEPLOYMENT_GUIDE.md
+```
+
+The autoconfiguration tool:
+- ✅ Validates all 21 required files
+- ✅ Generates complete GPT configuration
+- ✅ Creates OpenAI-compatible export
+- ✅ Provides step-by-step deployment guide
+- ✅ Includes interactive approval workflow
+
+See [AUTOCONFIG_QUICK_START.md](AUTOCONFIG_QUICK_START.md) for details or [GPT_AUTOCONFIG_GUIDE.md](GPT_AUTOCONFIG_GUIDE.md) for comprehensive documentation.
+
+#### Option 2: Manual Packaging
+
+**For traditional file organization and manual upload:**
+
 ```bash
 # Step 1: Validate all required files exist
-python \
-  validate_gpt_files.py
+python validate_gpt_files.py
 
 # Step 2: Package files for easy upload
 python package_gpt_files.py
