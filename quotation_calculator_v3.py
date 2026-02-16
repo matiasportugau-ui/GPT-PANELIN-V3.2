@@ -983,10 +983,20 @@ def suggest_optimization(
     # Use binary search if the range is large enough to benefit (at least 10 steps)
     if (max_length - min_length) > BINARY_SEARCH_MIN_RANGE_M:
         # Binary search to find the point where waste crosses threshold
-        while (max_length - min_length) > step_m:
+        while (max_length - min_length) >= step_m:
             mid_length = (min_length + max_length) / 2.0
             # Round to nearest 5cm step
             mid_length = round(mid_length / step_m) * step_m
+            
+            # Ensure mid_length doesn't equal boundaries (would cause infinite loop)
+            if mid_length <= min_length:
+                mid_length = min_length + step_m
+            elif mid_length >= max_length:
+                mid_length = max_length - step_m
+            
+            # Break if we can't make progress
+            if mid_length <= min_length or mid_length >= max_length:
+                break
             
             # Calculate waste at this length
             test_total_area = mid_length * panels_needed * quantity * product["ancho_util_m"]
@@ -1001,10 +1011,10 @@ def suggest_optimization(
             if test_waste_pct <= waste_threshold_pct:
                 # Waste is acceptable, try shorter length
                 best_length = mid_length
-                max_length = mid_length - step_m
+                max_length = mid_length
             else:
                 # Waste too high, need longer panel
-                min_length = mid_length + step_m
+                min_length = mid_length
         
         suggested_length_m = best_length
     else:

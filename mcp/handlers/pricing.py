@@ -130,35 +130,38 @@ def _search_products(data: dict[str, Any] | list[Any], query: str, filter_type: 
     
     # Use index for faster lookups
     if filter_type == "sku":
-        # Direct SKU lookup
+        # Direct SKU lookup - O(1)
         product = _pricing_index["by_sku"].get(norm_query)
         if product:
             results.append(product)
         else:
-            # Fallback to partial match
+            # Fallback to partial match - O(n) but only when exact match fails
+            # This is acceptable for SKU queries which are typically exact matches
             for sku_key, product in _pricing_index["by_sku"].items():
                 if norm_query in sku_key:
                     results.append(product)
     elif filter_type == "family":
-        # Family lookup with index
+        # Family lookup with index - O(1)
         family_products = _pricing_index["by_family"].get(norm_query, [])
         results.extend(family_products)
-        # Also check for partial matches
+        # Partial match fallback - O(families) only when exact match fails
+        # Trade-off: simplicity vs perfect O(1) for all cases
         if not results:
             for family_key, products_list in _pricing_index["by_family"].items():
                 if norm_query in family_key:
                     results.extend(products_list)
     elif filter_type == "type":
-        # Type lookup with index
+        # Type lookup with index - O(1)
         type_products = _pricing_index["by_type"].get(norm_query, [])
         results.extend(type_products)
-        # Also check for partial matches
+        # Partial match fallback - O(types) only when exact match fails
+        # Trade-off: simplicity vs perfect O(1) for all cases
         if not results:
             for type_key, products_list in _pricing_index["by_type"].items():
                 if norm_query in type_key:
                     results.extend(products_list)
     else:  # filter_type == "search"
-        # General search using pre-normalized searchable strings
+        # General search using pre-normalized searchable strings - O(n) but unavoidable
         for idx, fields in _pricing_index["normalized_fields"].items():
             if norm_query in fields["searchable"]:
                 results.append(_pricing_index["products"][idx])
