@@ -1521,7 +1521,33 @@ configure_quotation_store(
 
 **🚀 For fast deployment, we provide automated helper tools:**
 
-#### Option 1: GitHub Actions Automation (Fully Automated Config Generation)
+#### Option 1: GitHub Actions + Claude Computer Use (Maximum Automation) ⭐ NEW
+
+**Most automated approach using AI-powered browser automation:**
+
+**What's Automated:**
+- ✅ Config generation via GitHub Actions (~1 min)
+- ✅ Browser-based deployment via Claude Computer Use (~5 min supervised)
+- ✅ File uploads, settings, verification
+- ✅ 65% time savings vs. manual
+
+**How it works:**
+```
+1. Push changes → GitHub Actions generates config
+2. Open Claude Desktop with Computer Use enabled
+3. Give Claude the deployment task
+4. Claude downloads artifacts, navigates OpenAI, uploads files
+5. You supervise and approve actions
+6. GPT is published
+```
+
+**Total time:** ~6 minutes (1 min automated + 5 min supervised)
+**Cost:** ~$0.45 per deployment (Claude API)
+**Prerequisites:** Claude Desktop with Computer Use enabled
+
+See [CLAUDE_COMPUTER_USE_AUTOMATION.md](CLAUDE_COMPUTER_USE_AUTOMATION.md) for complete setup guide, prompts, security considerations, and troubleshooting.
+
+#### Option 2: GitHub Actions Automation (Partial Automation)
 
 **Automates configuration generation via GitHub Actions:**
 
