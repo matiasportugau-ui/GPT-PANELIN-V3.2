@@ -386,7 +386,7 @@ When adding new features:
 
 ### Content Verification ✅
 
-- ✅ Handler line counts accurate (governance.py: 435 lines)
+- ✅ Handler line counts accurate (governance.py: 524 lines)
 - ✅ Tool contracts verified
 - ✅ Version numbers cross-checked
 - ✅ Feature descriptions match implementation
