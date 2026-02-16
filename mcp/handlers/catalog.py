@@ -19,6 +19,54 @@ KB_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_FILE = KB_ROOT / "shopify_catalog_v1.json"
 
 _catalog_data: list[dict[str, Any]] | None = None
+_catalog_index: dict[str, Any] | None = None
+
+
+def _normalize(text: str) -> str:
+    return text.lower().strip()
+
+
+def _build_catalog_index(catalog: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build search index for fast catalog lookups.
+    
+    Returns dict with:
+        - normalized_fields: {index: {title, type, tags, handle, searchable}} - pre-normalized
+        - by_type: {normalized_type: [indices]}
+    """
+    normalized_fields = {}
+    by_type = {}
+    
+    for idx, product in enumerate(catalog):
+        if not isinstance(product, dict):
+            continue
+        
+        title = _normalize(product.get("title", ""))
+        ptype = _normalize(product.get("product_type", ""))
+        tags = _normalize(str(product.get("tags", "")))
+        handle = _normalize(product.get("handle", ""))
+        
+        # Pre-build searchable string
+        searchable = f"{title} {ptype} {tags} {handle}"
+        
+        normalized_fields[idx] = {
+            "title": title,
+            "type": ptype,
+            "tags": tags,
+            "handle": handle,
+            "searchable": searchable
+        }
+        
+        # Index by product type
+        if ptype:
+            if ptype not in by_type:
+                by_type[ptype] = []
+            by_type[ptype].append(idx)
+    
+    return {
+        "normalized_fields": normalized_fields,
+        "by_type": by_type,
+        "products": catalog  # Keep reference to original list
+    }
 
 
 def _load_catalog() -> list[dict[str, Any]]:
@@ -28,10 +76,6 @@ def _load_catalog() -> list[dict[str, Any]]:
             raw = json.load(f)
         _catalog_data = raw if isinstance(raw, list) else raw.get("products", [])
     return _catalog_data
-
-
-def _normalize(text: str) -> str:
-    return text.lower().strip()
 
 
 def _to_lightweight(product: dict[str, Any]) -> dict[str, Any]:
@@ -197,22 +241,27 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
             return error_response
 
     try:
+        global _catalog_index
+        
+        # Build index on first call
+        if _catalog_index is None:
+            _catalog_index = _build_catalog_index(catalog)
+        
+        # Pre-normalize category keywords once
+        norm_category_keywords = [_normalize(kw) for kw in category_keywords] if category_keywords else []
+        
         results: list[dict[str, Any]] = []
-        for product in catalog:
-            title = _normalize(product.get("title", ""))
-            ptype = _normalize(product.get("product_type", ""))
-            tags = _normalize(str(product.get("tags", "")))
-            handle = _normalize(product.get("handle", ""))
-            searchable = f"{title} {ptype} {tags} {handle}"
-
-            if norm_query not in searchable:
+        
+        # Use pre-normalized searchable strings from index
+        for idx, fields in _catalog_index["normalized_fields"].items():
+            if norm_query not in fields["searchable"]:
                 continue
-
-            if category_keywords:
-                if not any(kw in searchable for kw in category_keywords):
+            
+            if norm_category_keywords:
+                if not any(kw in fields["searchable"] for kw in norm_category_keywords):
                     continue
-
-            results.append(product)
+            
+            results.append(_catalog_index["products"][idx])
             if len(results) >= limit:
                 break
 

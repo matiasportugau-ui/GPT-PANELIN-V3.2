@@ -397,19 +397,28 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
         # regardless of the format requested by external callers. This ensures consistent internal
         # communication while maintaining backwards compatibility at the API boundary.
         
-        # Try each SKU candidate
-        for sku_candidate in sku_candidates:
+        # Parallelize SKU candidate price checks using asyncio.gather()
+        import asyncio
+        
+        async def fetch_price(sku: str) -> tuple[str, dict | None]:
+            """Fetch price for a single SKU candidate."""
             try:
-                price_result = await handle_price_check({"query": sku_candidate, "filter_type": "sku"})
-                if price_result.get("ok") and price_result.get("matches"):
-                    match = price_result["matches"][0]
-                    panel_unit_price = match.get("price_usd_iva_inc", 0.0)
-                    panel_sku = match.get("sku", sku_candidate)
-                    break
+                result = await handle_price_check({"query": sku, "filter_type": "sku"})
+                if result.get("ok") and result.get("matches"):
+                    return (sku, result["matches"][0])
             except Exception as e:
-                # Log the exception but continue trying other SKU candidates
-                logger.debug(f"Failed to fetch price for SKU candidate '{sku_candidate}': {e}")
-                continue
+                logger.debug(f"Failed to fetch price for SKU candidate '{sku}': {e}")
+            return (sku, None)
+        
+        # Fetch all SKU candidates in parallel
+        price_results = await asyncio.gather(*[fetch_price(sku) for sku in sku_candidates])
+        
+        # Use the first successful result
+        for sku_candidate, match in price_results:
+            if match:
+                panel_unit_price = match.get("price_usd_iva_inc", 0.0)
+                panel_sku = match.get("sku", sku_candidate)
+                break
         
         # Add panel item
         panel_subtotal = panel_unit_price * qty_panels
