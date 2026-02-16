@@ -18,12 +18,38 @@ logger = logging.getLogger(__name__)
 KB_ROOT = Path(__file__).resolve().parent.parent.parent
 CATALOG_FILE = KB_ROOT / "shopify_catalog_v1.json"
 
+# Category keyword mappings for filtering
+CATEGORY_MAP = {
+    "techo": ["techo", "roof", "isoroof", "isodec", "cubierta"],
+    "pared": ["pared", "wall", "isowall", "isopanel"],
+    "camara": ["camara", "frio", "isofrig", "frigorifico"],
+    "accesorio": ["accesorio", "accessory", "fijacion", "tornillo", "cumbrera", "babeta"],
+}
+
 _catalog_data: list[dict[str, Any]] | None = None
 _catalog_index: dict[str, Any] | None = None
+_normalized_category_keywords: dict[str, list[str]] | None = None
 
 
 def _normalize(text: str) -> str:
     return text.lower().strip()
+
+
+def _get_normalized_category_keywords(category: str) -> list[str]:
+    """Get pre-normalized category keywords from cache.
+    
+    Caches normalized keywords to avoid repeated normalization.
+    """
+    global _normalized_category_keywords
+    
+    # Initialize cache on first call
+    if _normalized_category_keywords is None:
+        _normalized_category_keywords = {
+            cat: [_normalize(kw) for kw in keywords]
+            for cat, keywords in CATEGORY_MAP.items()
+        }
+    
+    return _normalized_category_keywords.get(category, [])
 
 
 def _build_catalog_index(catalog: list[dict[str, Any]]) -> dict[str, Any]:
@@ -151,14 +177,6 @@ def _map_to_v1_result(product: dict[str, Any], query: str, norm_query: str) -> d
     return result
 
 
-CATEGORY_MAP = {
-    "techo": ["techo", "roof", "isoroof", "isodec", "cubierta"],
-    "pared": ["pared", "wall", "isowall", "isopanel"],
-    "camara": ["camara", "frio", "isofrig", "frigorifico"],
-    "accesorio": ["accesorio", "accessory", "fijacion", "tornillo", "cumbrera", "babeta"],
-}
-
-
 async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool = False) -> dict[str, Any]:
     """Execute catalog_search tool and return lightweight results in v1 contract format.
     
@@ -220,11 +238,11 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
     catalog = _load_catalog()
     norm_query = _normalize(query)
 
-    # Determine category keywords
-    category_keywords: list[str] = []
+    # Get pre-normalized category keywords (cached)
+    norm_category_keywords: list[str] = []
     if category != "all":
         if category in CATEGORY_MAP:
-            category_keywords = CATEGORY_MAP[category]
+            norm_category_keywords = _get_normalized_category_keywords(category)
         else:
             error_response = {
                 "ok": False,
@@ -246,9 +264,6 @@ async def handle_catalog_search(arguments: dict[str, Any], legacy_format: bool =
         # Build index on first call
         if _catalog_index is None:
             _catalog_index = _build_catalog_index(catalog)
-        
-        # Pre-normalize category keywords once
-        norm_category_keywords = [_normalize(kw) for kw in category_keywords] if category_keywords else []
         
         results: list[dict[str, Any]] = []
         

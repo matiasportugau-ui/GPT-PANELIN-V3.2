@@ -32,6 +32,10 @@ from pathlib import Path
 import json
 import math
 
+# Optimization constants
+OPTIMIZATION_STEP_M = 0.05  # 5cm steps for length optimization
+BINARY_SEARCH_MIN_RANGE_M = 0.5  # Minimum range (10 steps) to use binary search over linear
+
 # Type definitions for structured outputs
 class ProductSpecs(TypedDict):
     product_id: str
@@ -968,7 +972,7 @@ def suggest_optimization(
     
     # Try to find optimized length using binary search (much faster than linear)
     # We need to ensure we still cover the width
-    step_m = 0.05  # 5cm steps
+    step_m = OPTIMIZATION_STEP_M
     
     # Binary search for the optimal length
     min_length = product["largo_min_m"]
@@ -976,8 +980,8 @@ def suggest_optimization(
     suggested_length_m = length_m
     best_length = length_m
     
-    # Use binary search if the range is large enough to benefit
-    if (max_length - min_length) > step_m * 10:
+    # Use binary search if the range is large enough to benefit (at least 10 steps)
+    if (max_length - min_length) > BINARY_SEARCH_MIN_RANGE_M:
         # Binary search to find the point where waste crosses threshold
         while (max_length - min_length) > step_m:
             mid_length = (min_length + max_length) / 2.0
