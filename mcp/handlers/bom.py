@@ -409,6 +409,10 @@ async def handle_bom_calculate(arguments: dict[str, Any], legacy_format: bool = 
                 logger.debug(f"Failed to fetch price for SKU candidate '{sku}': {e}")
             return (sku, None)
         
+        # NOTE: sku_candidates is a small, fixed list of format variants (currently 3).
+        # If this list is ever expanded to many dynamically generated candidates, add
+        # explicit concurrency limiting (e.g., using an asyncio.Semaphore around
+        # handle_price_check) to avoid creating too many parallel requests.
         # Fetch all SKU candidates in parallel
         price_results = await asyncio.gather(*[fetch_price(sku) for sku in sku_candidates])
         
