@@ -899,6 +899,10 @@ def suggest_optimization(
     # Calculate effective/useful area (what we actually need to cover)
     useful_area = length_m * width_m * quantity
     
+    # Guard against division by zero
+    if total_area <= 0:
+        return None
+    
     # Compute waste percentage
     waste_pct = ((total_area - useful_area) / total_area) * 100.0
     
@@ -912,13 +916,20 @@ def suggest_optimization(
     step_m = 0.05  # 5cm steps
     
     # Try reducing length while ensuring we can still cover the width
-    for test_length in [length_m - (i * step_m) for i in range(1, int(length_m / step_m))]:
+    max_iterations = int(length_m / step_m)
+    for i in range(1, max_iterations):
+        test_length = length_m - (i * step_m)
         if test_length < product["largo_min_m"]:
             break
         
         # Recalculate with test length
         test_total_area = test_length * panels_needed * quantity * product["ancho_util_m"]
         test_useful_area = test_length * width_m * quantity
+        
+        # Guard against division by zero
+        if test_total_area <= 0:
+            continue
+        
         test_waste_pct = ((test_total_area - test_useful_area) / test_total_area) * 100.0
         
         # Check if this brings waste below threshold
