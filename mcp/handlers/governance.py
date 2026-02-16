@@ -86,6 +86,7 @@ def _resolve_field(data: Any, field_path: str) -> tuple[bool, Any]:
         (found: bool, value: Any)
     """
     import re
+    # Split on dots that are not inside square brackets
     parts = re.split(r'\.(?![^\[]*\])', field_path)
     current = data
     for part in parts:
@@ -260,12 +261,12 @@ async def handle_validate_correction(
     kb_file = arguments.get("kb_file", "")
     field = arguments.get("field", "")
     current_value = arguments.get("current_value", "")
-    proposed_value = arguments.get("proposed_value", "")
+    proposed_value = arguments.get("proposed_value")
     source = arguments.get("source", "user_correction")
     notes = arguments.get("notes", "")
 
     # --- Validate required parameters ---
-    if not kb_file or not field or proposed_value == "":
+    if not kb_file or not field or proposed_value is None:
         return {
             "ok": False,
             "contract_version": CONTRACT_VERSION,
