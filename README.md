@@ -31,7 +31,7 @@
 
 ## 🎯 Overview
 
-**Panelin 3.3** (BMC Assistant Pro) is an advanced AI assistant specialized in generating professional quotations for construction panel systems. This repository contains all configuration files, knowledge bases, documentation, automated deployment tools, and an autonomous evolution system needed to deploy and continuously improve the GPT on OpenAI's platform.
+**Panelin 3.4** (BMC Assistant Pro) is an advanced AI assistant specialized in generating professional quotations for construction panel systems. This repository contains all configuration files, knowledge bases, documentation, automated deployment tools, and an autonomous evolution system needed to deploy and continuously improve the GPT on OpenAI's platform.
 
 ### What is Panelin?
 
@@ -114,11 +114,11 @@ Panelin is a technical sales assistant that:
 
 ### Basic Information
 
-- **Name**: Panelin 3.3
-- **Description**: BMC Assistant Pro - Specialized technical quotation assistant for panel systems (ISODEC, ISOPANEL, ISOROOF, ISOWALL, ISOFRIG) with complete BOM calculation, enhanced PDF generation (v2.0), and professional advisory. Knowledge Base v7.0 with 70+ accessories catalog and parametric rules for 6 construction systems.
+- **Name**: Panelin 3.4
+- **Description**: BMC Assistant Pro - Specialized technical quotation assistant for panel systems (ISODEC, ISOPANEL, ISOROOF, ISOWALL, ISOFRIG) with complete BOM calculation, enhanced PDF generation (v2.0), Wolf API KB write capabilities, and professional advisory. Knowledge Base v7.0 with 70+ accessories catalog and parametric rules for 6 construction systems.
 - **Instructions**: See [Instrucciones GPT.rtf](Instrucciones%20GPT.rtf) for complete system instructions
-- **Version**: 3.3 (KB v7.0, PDF Template v2.0)
-- **Last Updated**: 2026-02-11
+- **Version**: 3.4 (KB v7.0, PDF Template v2.0, MCP v0.3.0)
+- **Last Updated**: 2026-02-14
 
 ### Conversation Starters
 
@@ -209,12 +209,17 @@ GPT-PANELIN-V3.3/
 │       ├── server.py                            # Main MCP server (stdio & SSE transports)
 │       ├── requirements.txt                     # MCP dependencies (mcp>=1.0.0, uvicorn, starlette)
 │       ├── config/                              # Configuration files
-│       ├── handlers/                            # Tool handler implementations
+│       ├── handlers/                            # Tool handler implementations (18 tools)
 │       │   ├── pricing.py                       # price_check tool handler
 │       │   ├── catalog.py                       # catalog_search tool handler
 │       │   ├── bom.py                           # bom_calculate tool handler
 │       │   ├── errors.py                        # report_error tool handler
-│       │   └── tasks.py                         # Background task tool handlers (7 tools)
+│       │   ├── tasks.py                         # Background task tool handlers (7 tools)
+│       │   ├── wolf_kb_write.py                 # Wolf API KB write handlers (4 tools)
+│       │   ├── governance.py                    # Self-healing governance handlers (2 tools)
+│       │   └── quotation.py                     # Quotation persistence handler (1 tool)
+│       ├── storage/                             # Backend-agnostic storage layer
+│       │   └── memory_store.py                  # Memory-based quotation storage
 │       ├── tasks/                               # Background task processing engine
 │       │   ├── models.py                        # Task lifecycle models and data classes
 │       │   ├── manager.py                       # Async task manager with concurrency control
@@ -224,7 +229,7 @@ GPT-PANELIN-V3.3/
 │       │       ├── test_manager.py
 │       │       ├── test_workers.py
 │       │       └── test_handlers.py
-│       └── tools/                               # JSON tool schemas
+│       └── tools/                               # JSON tool schemas (18 tools)
 │           ├── price_check.json                 # Pricing lookup schema
 │           ├── catalog_search.json              # Catalog search schema
 │           ├── bom_calculate.json               # BOM calculator schema
@@ -235,7 +240,14 @@ GPT-PANELIN-V3.3/
 │           ├── task_status.json                 # Task status query schema
 │           ├── task_result.json                 # Task result retrieval schema
 │           ├── task_list.json                   # Task listing schema
-│           └── task_cancel.json                 # Task cancellation schema
+│           ├── task_cancel.json                 # Task cancellation schema
+│           ├── persist_conversation.json        # Wolf API conversation persistence
+│           ├── register_correction.json         # Wolf API correction registration
+│           ├── save_customer.json               # Wolf API customer data storage
+│           ├── lookup_customer.json             # Wolf API customer lookup
+│           ├── validate_correction.json         # Governance validation schema
+│           ├── commit_correction.json           # Governance commit schema
+│           └── quotation_store.json             # Quotation persistence schema
 │
 ├── CALCULATION ENGINE
 │   ├── quotation_calculator_v3.py               # Python calculation engine v3.1
@@ -460,7 +472,7 @@ cat .evolucionador/reports/latest.md
 
 ## 🔌 MCP Server - Model Context Protocol Integration
 
-**Version:** 0.1.0 | **Status:** 🚧 In Development | **Mission:** Persistent tools for quotation workflows
+**Version:** 0.3.0 | **Status:** ✅ Production Ready | **Mission:** Persistent tools for quotation workflows with self-healing governance
 
 ### What is the MCP Server?
 
@@ -477,8 +489,9 @@ The implementation consists of three main components:
 
 #### 1. Core MCP Server (`mcp/`)
 
-A minimal MCP server built on the MCP SDK that provides four core tools:
+A production-ready MCP server built on the MCP SDK that provides **18 specialized tools** across five categories:
 
+**Core Tools (4):**
 | Tool | Purpose | Handler |
 |------|---------|---------|
 | `price_check` | Product pricing lookup from master KB | `handlers/pricing.py` |
@@ -486,11 +499,45 @@ A minimal MCP server built on the MCP SDK that provides four core tools:
 | `bom_calculate` | Complete BOM calculation using parametric rules | `handlers/bom.py` |
 | `report_error` | Log KB errors to corrections_log.json | `handlers/errors.py` |
 
+**Background Task Tools (7):**
+| Tool | Purpose | Handler |
+|------|---------|---------|
+| `batch_bom_calculate` | Process multiple BOMs asynchronously | `handlers/tasks.py` |
+| `bulk_price_check` | Bulk pricing lookups | `handlers/tasks.py` |
+| `full_quotation` | Complete quotation with BOM + pricing | `handlers/tasks.py` |
+| `task_status` | Check task progress | `handlers/tasks.py` |
+| `task_result` | Retrieve completed task results | `handlers/tasks.py` |
+| `task_list` | List recent tasks | `handlers/tasks.py` |
+| `task_cancel` | Cancel pending/running tasks | `handlers/tasks.py` |
+
+**Wolf API KB Write Tools (4):**
+| Tool | Purpose | Handler |
+|------|---------|---------|
+| `persist_conversation` | Save conversation history to KB | `handlers/wolf_kb_write.py` |
+| `register_correction` | Register KB corrections | `handlers/wolf_kb_write.py` |
+| `save_customer` | Store customer data | `handlers/wolf_kb_write.py` |
+| `lookup_customer` | Retrieve customer data | `handlers/wolf_kb_write.py` |
+
+**Self-Healing Governance Tools (2):**
+| Tool | Purpose | Handler |
+|------|---------|---------|
+| `validate_correction` | Validate KB corrections with impact analysis | `handlers/governance.py` |
+| `commit_correction` | Apply validated corrections | `handlers/governance.py` |
+
+**Quotation Persistence (1):**
+| Tool | Purpose | Handler |
+|------|---------|---------|
+| `quotation_store` | Store quotations with vector search | `handlers/quotation.py` |
+
 **Key Features:**
 - Dual transport support: `stdio` (local/OpenAI Custom GPT Actions) and `sse` (remote hosting)
+- 18 production-ready tools across 5 categories
 - JSON tool schemas in `tools/` directory
 - Direct KB file access (no duplication in GPT context)
-- Handlers use Python stdlib only; MCP server requires MCP SDK + transport deps (see `mcp/requirements.txt`)
+- Self-healing governance with two-step approval workflow
+- Backend-agnostic quotation storage
+- Thread-safe handlers with `threading.Lock` patterns
+- Comprehensive error codes via `mcp_tools.contracts`
 
 **Usage:**
 ```bash
@@ -548,35 +595,40 @@ tools = server.tools_registry()
 
 ### MCP vs. Traditional Architecture
 
-| Aspect | Traditional (v3.3) | MCP-Enhanced (v4.0) |
+| Aspect | Traditional (v3.3) | MCP-Enhanced (v3.4) |
 |--------|-------------------|---------------------|
 | **KB Upload** | All files uploaded to GPT | Tools access KB directly |
 | **Context Usage** | ~122K tokens/session | ~40K tokens/session |
 | **Data Updates** | Manual re-upload required | Automatic via GitHub MCP |
-| **Error Corrections** | Lost between sessions | Persisted in corrections_log.json |
+| **Error Corrections** | Lost between sessions | Persisted + governed workflow |
 | **API Access** | Via Custom GPT Actions | Native MCP tools |
-| **Session Memory** | Limited to conversation | Persistent tool state |
+| **Session Memory** | Limited to conversation | Persistent quotation store |
+| **Governance** | Manual review process | Automated impact analysis |
 | **Cost** | $22.50–$40.50/mo | $15–$57/mo (with GitHub MCP) |
 
 ### Current Status & Roadmap
 
 **✅ Completed:**
-- MCP server skeleton with 4 tool handlers
-- Tool schemas and configuration
+- MCP server v0.3.0 with 18 production-ready tools
+- Core tools (pricing, catalog, BOM, errors)
+- Background task processing with async manager
+- Wolf API KB write capabilities (4 tools)
+- Self-healing governance system (2 tools)
+- Quotation persistence with vector search
+- Tool schemas and contracts
 - MCP integration client implementations
-- Comparative analysis and architecture planning
-- KB restructuring analysis
+- Comprehensive test coverage (100+ tests)
+- Thread-safe handlers with proper locking
 
 **🚧 In Progress:**
-- Handler implementation refinement
-- Testing with OpenAI Custom GPT Actions
-- GitHub MCP integration for KB versioning
-
-**📋 Planned:**
 - Production deployment on Cloud Run
 - Full GitHub MCP sync workflow
-- Qdrant integration for session persistence
+- Qdrant integration for enhanced vector search
+
+**📋 Planned:**
 - Automated KB updates via MCP
+- Real-time quotation analytics dashboard
+- Machine learning-based price prediction
 
 ### Integration Guide
 
@@ -862,7 +914,7 @@ The repository includes `llms.txt` — an LLM-optimized documentation index that
 
 **Panelin MCP Server** provides a standards-compliant [Model Context Protocol](https://modelcontextprotocol.io) interface for integrating Panelin's quotation tools with any MCP-compatible AI assistant, including OpenAI's GPTs, Claude Desktop, and other MCP clients.
 
-**Status:** ✅ Production Ready | **Version:** 0.2.0 | **Transport:** stdio, SSE
+**Status:** ✅ Production Ready | **Version:** 0.3.0 | **Transport:** stdio, SSE
 
 ### What is MCP?
 
@@ -1213,7 +1265,18 @@ mcp/
 │       ├── test_manager.py
 │       ├── test_workers.py
 │       └── test_handlers.py
-└── tools/                 # JSON tool schemas
+├── handlers/              # Tool handler implementations (18 tools)
+│   ├── pricing.py        # price_check handler
+│   ├── catalog.py        # catalog_search handler
+│   ├── bom.py            # bom_calculate handler
+│   ├── errors.py         # report_error handler
+│   ├── tasks.py          # Background task tool handlers (7 tools)
+│   ├── wolf_kb_write.py  # Wolf API KB write handlers (4 tools)
+│   ├── governance.py     # Self-healing governance handlers (2 tools)
+│   └── quotation.py      # Quotation persistence handler (1 tool)
+├── storage/               # Backend-agnostic storage layer
+│   └── memory_store.py   # Memory-based quotation storage
+└── tools/                 # JSON tool schemas (18 tools)
     ├── price_check.json
     ├── catalog_search.json
     ├── bom_calculate.json
@@ -1224,8 +1287,208 @@ mcp/
     ├── task_status.json
     ├── task_result.json
     ├── task_list.json
-    └── task_cancel.json
+    ├── task_cancel.json
+    ├── persist_conversation.json
+    ├── register_correction.json
+    ├── save_customer.json
+    ├── lookup_customer.json
+    ├── validate_correction.json
+    ├── commit_correction.json
+    └── quotation_store.json
 ```
+
+---
+
+## 🔒 Self-Healing Governance Architecture
+
+**Version:** 1.0 | **Status:** ✅ Production Ready | **Handler:** `mcp/handlers/governance.py` (435 lines)
+
+### Overview
+
+The self-healing governance system provides enterprise-grade change management for Knowledge Base corrections with automatic impact analysis and two-step approval workflow.
+
+### Core Features
+
+- **Two-step approval workflow**: validate → review → commit
+- **Automatic impact analysis**: Simulates corrections on last 50 quotations
+- **Thread-safe**: Uses `threading.Lock` for pending changes cache
+- **Whitelist-based**: Only allowed KB files can be modified
+- **Audit trail**: All corrections logged to `corrections_log.json`
+- **Deterministic IDs**: SHA-256 based change IDs for uniqueness
+
+### Governance Tools
+
+#### 9. validate_correction
+
+**Purpose:** Validate proposed KB corrections and simulate impact on recent quotations
+
+**Input Schema:**
+```json
+{
+  "kb_file": "bromyros_pricing_master.json",
+  "field": "data.products[0].pricing.web_iva_inc",
+  "proposed_value": "47.50",
+  "reason": "Price updated per supplier notification"
+}
+```
+
+**Response:** Returns comprehensive change report with:
+- Current vs proposed values
+- Impact analysis (affected quotations, price deltas)
+- Risk assessment
+- `change_id` for commit step
+
+**Error Codes:** Via `VALIDATE_CORRECTION_ERROR_CODES`
+
+#### 10. commit_correction
+
+**Purpose:** Apply validated corrections after review and approval
+
+**Input Schema:**
+```json
+{
+  "change_id": "CHG-A1B2C3D4E5F6",
+  "approved_by": "admin_user"
+}
+```
+
+**Response:** Confirmation with applied changes and affected files
+
+**Error Codes:** Via `COMMIT_CORRECTION_ERROR_CODES`
+
+### Workflow
+
+```
+User proposes correction
+   ↓
+validate_correction
+   ↓ [validates against pricing index]
+   ↓ [simulates impact on quotations]
+   ↓ [generates change report]
+   ↓
+Returns change_id + impact report
+   ↓
+User reviews impact
+   ↓
+commit_correction (if approved)
+   ↓ [applies changes to KB]
+   ↓ [logs to corrections_log.json]
+   ↓
+Confirmation returned
+```
+
+### Allowed KB Files
+
+Only these files can be modified through governance:
+- `bromyros_pricing_master.json`
+- `bromyros_pricing_gpt_optimized.json`
+- `accessories_catalog.json`
+- `bom_rules.json`
+- `shopify_catalog_v1.json`
+- `BMC_Base_Conocimiento_GPT-2.json`
+- `perfileria_index.json`
+
+---
+
+## 💾 Quotation Persistence System
+
+**Version:** 1.0 | **Status:** ✅ Production Ready | **Handler:** `mcp/handlers/quotation.py` (187 lines)
+
+### Overview
+
+Backend-agnostic quotation storage with optional vector similarity search for building quotation history and pattern analysis.
+
+### Core Features
+
+- **Backend-agnostic design**: Currently Memory Store, extensible to Qdrant/PostgreSQL
+- **Vector similarity search**: Optional retrieval of similar past quotations
+- **Analytics tracking**: Structured logging with event data
+- **Size limits**: 1MB JSON payload limit for safety
+- **JSON validation**: Serialization checks before storage
+- **Configuration**: Injectable via `configure_quotation_store()`
+
+### Quotation Store Tool
+
+#### 11. quotation_store
+
+**Purpose:** Store quotations with embeddings for future retrieval and analysis
+
+**Input Schema:**
+```json
+{
+  "quotation": {
+    "client_name": "Empresa ABC",
+    "product_family": "ISODEC",
+    "thickness_mm": 100,
+    "area_m2": 66.0,
+    "total_usd": 2500.00,
+    "items": [...]
+  },
+  "embedding": [0.123, 0.456, 0.789, ...],
+  "include_similar": true,
+  "limit": 3
+}
+```
+
+**Parameters:**
+- `quotation` (required): Complete quotation object
+- `embedding` (required): Vector embedding (non-empty number array)
+- `include_similar` (optional): Return similar past quotations (default: false)
+- `limit` (optional): Max similar quotations to return (default: 3)
+
+**Response:**
+```json
+{
+  "quotation_id": "QT-2026-02-16-001",
+  "stored_at": "2026-02-16T20:45:00Z",
+  "backend": "memory_store",
+  "similar_quotations": [
+    {
+      "quotation_id": "QT-2026-02-14-003",
+      "similarity": 0.94,
+      "client_name": "Empresa XYZ",
+      "total_usd": 2450.00
+    }
+  ]
+}
+```
+
+### Storage Architecture
+
+```
+quotation_store handler
+   ↓
+MemoryStore (current) / Qdrant (planned)
+   ↓
+JSON persistence (quotation_memory.json)
+   ↓
+Optional vector similarity search
+```
+
+### Configuration
+
+```python
+from mcp.storage.memory_store import MemoryStore
+from mcp.handlers.quotation import configure_quotation_store
+
+# Initialize storage
+store = MemoryStore(persist_path="quotation_memory.json")
+configure_quotation_store(
+    store=store,
+    enable_vector_retrieval=True,
+    backend_metadata={"active_backend": "memory_store"}
+)
+```
+
+### Use Cases
+
+- **Quotation history**: Track all quotations over time
+- **Pattern analysis**: Identify common configurations
+- **Price trending**: Monitor pricing evolution
+- **Similar project lookup**: Find comparable past quotations
+- **Analytics**: Structured event logging for dashboards
+
+---
 
 ### Additional Resources
 
@@ -1242,10 +1505,13 @@ mcp/
 |---------|--------|
 | **Reduced Token Usage** | 77% reduction in tokens/session (149K → 34K) |
 | **Real-time Data** | Dynamic pricing and catalog queries instead of static KB |
-| **Error Tracking** | Persistent logging of KB inconsistencies |
+| **Error Tracking** | Persistent logging with governance workflow |
+| **Self-Healing** | Automated impact analysis for KB corrections |
+| **Quotation Memory** | Persistent storage with similarity search |
 | **Standard Protocol** | Works with any MCP-compatible AI assistant |
 | **Scalability** | External data sources don't consume GPT context window |
 | **Version Control** | KB updates via GitHub without GPT redeployment |
+| **Thread Safety** | Production-ready with proper locking patterns |
 
 ---
 
@@ -1736,7 +2002,7 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | Document | Description | Purpose |
 |----------|-------------|---------|
 | [MCP_QUICK_START.md](MCP_QUICK_START.md) | Get MCP server running in 3 steps | Quick deployment |
-| [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) | Practical examples for all 4 tools | Learning & testing |
+| [MCP_USAGE_EXAMPLES.md](MCP_USAGE_EXAMPLES.md) | Practical examples for all 18 tools | Learning & testing |
 | [MCP_SERVER_COMPARATIVE_ANALYSIS.md](MCP_SERVER_COMPARATIVE_ANALYSIS.md) | Analysis of 10 MCP server options | Architecture decisions |
 | [KB_MCP_MIGRATION_PROMPT.md](KB_MCP_MIGRATION_PROMPT.md) | KB migration to MCP architecture | Migration planning |
 | [KB_ARCHITECTURE_AUDIT.md](KB_ARCHITECTURE_AUDIT.md) | KB optimization audit | Token reduction strategy |
@@ -1745,8 +2011,11 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 
 | Document | Description | Version |
 |----------|-------------|---------|
+| [IMPLEMENTATION_SUMMARY_V3.4.md](IMPLEMENTATION_SUMMARY_V3.4.md) | V3.4 changes (Wolf API write, governance, storage) | 3.4 |
 | [IMPLEMENTATION_SUMMARY_V3.3.md](IMPLEMENTATION_SUMMARY_V3.3.md) | V3.3 changes and new features | 3.3 |
 | [EVOLUCIONADOR_FINAL_REPORT.md](EVOLUCIONADOR_FINAL_REPORT.md) | EVOLUCIONADOR completion report | 1.0.0 |
+| [WOLF_KB_WRITE_ACCESS_VERIFICATION.md](WOLF_KB_WRITE_ACCESS_VERIFICATION.md) | Wolf API write access verification guide | 3.4 |
+| [WOLF_WRITE_ACCESS_QUICK_GUIDE.md](WOLF_WRITE_ACCESS_QUICK_GUIDE.md) | Quick guide for Wolf API write capabilities | 3.4 |
 
 ### MCP Integration Documentation
 
@@ -1777,8 +2046,8 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | `panelin_reports/` | Professional PDF generation with BMC branding, ReportLab-based | 2.0 |
 | `openai_ecosystem/` | OpenAI API response extraction and normalization utilities | 1.0 |
 | `.evolucionador/` | Autonomous evolution agent with 7 validators, 6 optimizers, report generator | 1.0.0 |
-| `mcp/` | MCP server with 4 tools (price_check, catalog_search, bom_calculate, report_error) | 0.1.0 |
-| `panelin_mcp_integration/` | MCP integration clients for OpenAI Responses API and Wolf API wrapper | 0.1.0 |
+| `mcp/` | MCP server with 18 tools (4 core, 7 background, 4 Wolf API, 2 governance, 1 storage) | 0.3.0 |
+| `panelin_mcp_integration/` | MCP integration clients for OpenAI Responses API and Wolf API wrapper | 0.3.0 |
 
 #### OpenAI Ecosystem Module
 
@@ -1978,7 +2247,9 @@ When reporting issues with the GPT or KB:
 
 ### v3.4 / KB v7.0 / MCP v0.3.0 (2026-02-14) - Current
 
-**Wolf API KB Write Capabilities:**
+**Major Features:**
+
+**1. Wolf API KB Write Capabilities (4 Tools)**
 - **persist_conversation**: Save conversation summaries and quotation history to KB via Wolf API
 - **register_correction**: Register KB corrections detected during conversations for continuous improvement
 - **save_customer**: Store customer data (name, phone, address) for seamless repeat quotations
@@ -1987,8 +2258,41 @@ When reporting issues with the GPT or KB:
 - Uruguayan phone format validation (09XXXXXXX or +598XXXXXXXX)
 - 4 new MCP tool contracts (v1 envelope format with error codes)
 - OpenAI approval workflow for write operations
-- MCP server bumped to v0.3.0 with Wolf API config section
 - See `IMPLEMENTATION_SUMMARY_V3.4.md` for full details
+
+**2. Self-Healing Governance Architecture (2 Tools)**
+- **validate_correction**: Enterprise-grade validation with automatic impact analysis
+- **commit_correction**: Two-step approval workflow for KB corrections
+- Simulates impact on last 50 quotations before applying changes
+- Thread-safe with `threading.Lock` for pending changes cache
+- Whitelist-based security (only allowed KB files can be modified)
+- Complete audit trail in `corrections_log.json`
+- Deterministic SHA-256 based change IDs
+
+**3. Quotation Persistence System (1 Tool)**
+- **quotation_store**: Backend-agnostic quotation storage with vector similarity search
+- Memory Store implementation with extensibility to Qdrant/PostgreSQL
+- 1MB payload size limit for safety
+- Analytics tracking with structured logging
+- Optional retrieval of similar past quotations
+- Pattern analysis and history tracking capabilities
+
+**4. Production Readiness**
+- MCP Server bumped to v0.3.0
+- 18 total production-ready tools (4 core + 7 background + 4 Wolf API + 2 governance + 1 storage)
+- Comprehensive test coverage (100+ tests across all handlers)
+- Thread-safe implementations throughout
+- Standardized error codes via `mcp_tools.contracts`
+
+**Version Matrix:**
+| Component | v3.3 | v3.4 |
+|-----------|------|------|
+| Panelin Version | 3.3 | 3.4 |
+| Instructions Version | 2.4 | 2.5 |
+| MCP Server Version | 0.2.0 | 0.3.0 |
+| KB Version | 7.0 | 7.0 (unchanged) |
+| PDF Template Version | 2.0 | 2.0 (unchanged) |
+| Total MCP Tools | 12 | 18 (+4 Wolf, +2 Governance, +1 Storage) |
 
 ---
 
@@ -2165,12 +2469,13 @@ For technical support or questions about this GPT configuration:
 
 ---
 
-**Version:** 3.3  
+**Version:** 3.4  
 **Knowledge Base Version:** 7.0  
 **PDF Template Version:** 2.0  
-**Last Updated:** 2026-02-11  
+**MCP Server Version:** 0.3.0  
+**Last Updated:** 2026-02-16  
 **Maintained by:** BMC Uruguay Development Team  
 
 ---
 
-*This README provides complete documentation for deploying and operating the Panelin 3.3 GPT. For detailed technical specifications, consult the individual documentation files referenced throughout this document.* 
+*This README provides complete documentation for deploying and operating the Panelin 3.4 GPT with MCP Server integration, self-healing governance, and Wolf API KB write capabilities. For detailed technical specifications, consult the individual documentation files referenced throughout this document.* 
