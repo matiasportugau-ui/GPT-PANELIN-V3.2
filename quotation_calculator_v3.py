@@ -31,6 +31,11 @@ from typing import TypedDict, Optional, List, Literal
 from pathlib import Path
 import json
 import math
+import threading
+
+# Optimization constants
+OPTIMIZATION_STEP_M = 0.05  # 5cm steps for length optimization
+BINARY_SEARCH_MIN_RANGE_M = 0.5  # Minimum range (10 steps) to use binary search over linear
 
 # Type definitions for structured outputs
 class ProductSpecs(TypedDict):
@@ -127,24 +132,76 @@ class QuotationResult(TypedDict):
 
 
 def _load_knowledge_base() -> dict:
-    """Load the single source of truth knowledge base"""
-    # Try config directory first
-    kb_path = Path(__file__).parent.parent / "config" / "panelin_truth_bmcuruguay.json"
+    """Load the single source of truth knowledge base with caching.
     
-    if not kb_path.exists():
-        # Try root directory with version suffix
-        kb_path = Path(__file__).parent / "panelin_truth_bmcuruguay_web_only_v2.json"
+    Thread-safe using double-checked locking pattern.
+    """
+    global _KNOWLEDGE_BASE_CACHE
     
-    if not kb_path.exists():
-        raise FileNotFoundError(f"Knowledge base not found at {kb_path}")
+    # Fast path: check if already initialized (no lock needed for read)
+    if _KNOWLEDGE_BASE_CACHE is not None:
+        return _KNOWLEDGE_BASE_CACHE
     
-    with open(kb_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    # Slow path: need to load KB with lock
+    with _kb_cache_lock:
+        # Double-check inside lock (another thread may have loaded it)
+        if _KNOWLEDGE_BASE_CACHE is not None:
+            return _KNOWLEDGE_BASE_CACHE
+        
+        # Try config directory first
+        kb_path = Path(__file__).parent.parent / "config" / "panelin_truth_bmcuruguay.json"
+        
+        if not kb_path.exists():
+            # Try root directory with version suffix
+            kb_path = Path(__file__).parent / "panelin_truth_bmcuruguay_web_only_v2.json"
+        
+        if not kb_path.exists():
+            raise FileNotFoundError(f"Knowledge base not found at {kb_path}")
+        
+        with open(kb_path, 'r', encoding='utf-8') as f:
+            _KNOWLEDGE_BASE_CACHE = json.load(f)
+        
+        return _KNOWLEDGE_BASE_CACHE
 
 
 # V3 ENHANCEMENT: Catalog caching
 _ACCESSORIES_CATALOG_CACHE = None
 _BOM_RULES_CACHE = None
+_KNOWLEDGE_BASE_CACHE = None
+_PRODUCT_INDEX_CACHE = None  # Index for fast product lookups
+_kb_cache_lock = threading.Lock()
+_product_index_lock = threading.Lock()
+
+
+def _build_product_index(products: dict) -> dict:
+    """Build indices for fast product lookups by family+thickness+application.
+    
+    Returns dict with:
+        - by_family_thickness: {(family_upper, thickness_mm): [product_ids]}
+        - normalized_applications: {product_id: [normalized_apps]}
+    """
+    by_family_thickness = {}
+    normalized_applications = {}
+    
+    for pid, p in products.items():
+        family = p.get("family", "").upper()
+        thickness = p.get("thickness_mm")
+        
+        # Index by (family, thickness)
+        if family and thickness is not None:
+            key = (family, thickness)
+            if key not in by_family_thickness:
+                by_family_thickness[key] = []
+            by_family_thickness[key].append(pid)
+        
+        # Pre-normalize applications for faster search
+        apps = p.get("application", [])
+        normalized_applications[pid] = [a.lower() for a in apps] if apps else []
+    
+    return {
+        "by_family_thickness": by_family_thickness,
+        "normalized_applications": normalized_applications
+    }
 
 
 def _load_accessories_catalog() -> dict:
@@ -338,6 +395,52 @@ def validate_autoportancia(
     )
 
 
+def _product_to_specs(product_id: str, p: dict) -> ProductSpecs:
+    """Convert product dict to ProductSpecs TypedDict.
+    
+    Helper function to avoid code duplication in lookup_product_specs.
+    Includes defensive error handling for missing fields.
+    
+    Args:
+        product_id: The product identifier
+        p: Product dictionary from knowledge base
+        
+    Returns:
+        ProductSpecs with all required fields
+        
+    Raises:
+        KeyError: If required fields are missing from product dict
+        ValueError: If product data is malformed
+    """
+    required_fields = [
+        "name", "family", "sub_family", "thickness_mm", "price_per_m2",
+        "currency", "ancho_util_m", "largo_min_m", "largo_max_m",
+        "autoportancia_m", "stock_status"
+    ]
+    
+    # Check for missing required fields
+    missing = [field for field in required_fields if field not in p]
+    if missing:
+        raise KeyError(
+            f"Product {product_id} is missing required fields: {', '.join(missing)}"
+        )
+    
+    return ProductSpecs(
+        product_id=product_id,
+        name=p["name"],
+        family=p["family"],
+        sub_family=p["sub_family"],
+        thickness_mm=p["thickness_mm"],
+        price_per_m2=p["price_per_m2"],
+        currency=p["currency"],
+        ancho_util_m=p["ancho_util_m"],
+        largo_min_m=p["largo_min_m"],
+        largo_max_m=p["largo_max_m"],
+        autoportancia_m=p["autoportancia_m"],
+        stock_status=p["stock_status"]
+    )
+
+
 def lookup_product_specs(
     product_id: Optional[str] = None,
     family: Optional[str] = None,
@@ -345,7 +448,7 @@ def lookup_product_specs(
     application: Optional[str] = None
 ) -> Optional[ProductSpecs]:
     """
-    Look up product specifications from the knowledge base.
+    Look up product specifications from the knowledge base with indexed search.
     
     This is a DETERMINISTIC lookup - no LLM inference involved.
     
@@ -358,56 +461,57 @@ def lookup_product_specs(
     Returns:
         ProductSpecs dictionary or None if not found
     """
+    global _PRODUCT_INDEX_CACHE
     kb = _load_knowledge_base()
     products = kb.get("products", {})
+    
+    # Build index on first call with thread safety
+    # Fast path: check if already initialized (no lock needed for read)
+    if _PRODUCT_INDEX_CACHE is None:
+        # Slow path: need to build index with lock
+        with _product_index_lock:
+            # Double-check inside lock (another thread may have built it)
+            if _PRODUCT_INDEX_CACHE is None:
+                _PRODUCT_INDEX_CACHE = _build_product_index(products)
     
     # Direct lookup by product_id - if specified, must match exactly
     if product_id:
         if product_id in products:
-            p = products[product_id]
-            return ProductSpecs(
-                product_id=product_id,
-                name=p["name"],
-                family=p["family"],
-                sub_family=p["sub_family"],
-                thickness_mm=p["thickness_mm"],
-                price_per_m2=p["price_per_m2"],
-                currency=p["currency"],
-                ancho_util_m=p["ancho_util_m"],
-                largo_min_m=p["largo_min_m"],
-                largo_max_m=p["largo_max_m"],
-                autoportancia_m=p["autoportancia_m"],
-                stock_status=p["stock_status"]
-            )
+            return _product_to_specs(product_id, products[product_id])
         else:
             # product_id was specified but not found - return None
             return None
     
     # Search by criteria (only when no product_id specified)
+    # Use index if both family and thickness are specified
+    if family and thickness_mm is not None:
+        family_upper = family.upper()
+        candidate_ids = _PRODUCT_INDEX_CACHE["by_family_thickness"].get((family_upper, thickness_mm), [])
+        
+        # Filter by application if specified
+        if application:
+            app_lower = application.lower()
+            for pid in candidate_ids:
+                if app_lower in _PRODUCT_INDEX_CACHE["normalized_applications"].get(pid, []):
+                    return _product_to_specs(pid, products[pid])
+        elif candidate_ids:
+            # No application filter, return first match
+            return _product_to_specs(candidate_ids[0], products[candidate_ids[0]])
+    
+    # Fallback to linear search if index can't be used
+    normalized_app = application.lower() if application else None
     for pid, p in products.items():
         match = True
         if family and p.get("family", "").upper() != family.upper():
             match = False
         if thickness_mm and p.get("thickness_mm") != thickness_mm:
             match = False
-        if application and application.lower() not in [a.lower() for a in p.get("application", [])]:
-            match = False
+        if normalized_app:
+            if normalized_app not in _PRODUCT_INDEX_CACHE["normalized_applications"].get(pid, []):
+                match = False
         
         if match:
-            return ProductSpecs(
-                product_id=pid,
-                name=p["name"],
-                family=p["family"],
-                sub_family=p["sub_family"],
-                thickness_mm=p["thickness_mm"],
-                price_per_m2=p["price_per_m2"],
-                currency=p["currency"],
-                ancho_util_m=p["ancho_util_m"],
-                largo_min_m=p["largo_min_m"],
-                largo_max_m=p["largo_max_m"],
-                autoportancia_m=p["autoportancia_m"],
-                stock_status=p["stock_status"]
-            )
+            return _product_to_specs(pid, p)
     
     return None
 
@@ -910,32 +1014,82 @@ def suggest_optimization(
     if waste_pct <= waste_threshold_pct:
         return None
     
-    # Try to find optimized length by reducing in 5cm steps
+    # Try to find optimized length using binary search (much faster than linear)
     # We need to ensure we still cover the width
-    suggested_length_m = length_m
-    step_m = 0.05  # 5cm steps
+    step_m = OPTIMIZATION_STEP_M
     
-    # Try reducing length while ensuring we can still cover the width
-    max_iterations = int(length_m / step_m)
-    for i in range(1, max_iterations):
-        test_length = length_m - (i * step_m)
-        if test_length < product["largo_min_m"]:
-            break
+    # Binary search for the optimal length
+    min_length = product["largo_min_m"]
+    max_length = length_m
+    suggested_length_m = length_m
+    best_length = length_m
+    
+    # Use binary search if the range is large enough to benefit (at least 10 steps)
+    if (max_length - min_length) > BINARY_SEARCH_MIN_RANGE_M:
+        # Binary search to find the point where waste crosses threshold
+        prev_mid_length = None  # Track previous mid_length to detect convergence
         
-        # Recalculate with test length
-        test_total_area = test_length * panels_needed * quantity * product["ancho_util_m"]
-        test_useful_area = test_length * width_m * quantity
+        while (max_length - min_length) >= step_m:
+            mid_length = (min_length + max_length) / 2.0
+            # Round to nearest 5cm step
+            mid_length = round(mid_length / step_m) * step_m
+            
+            # Ensure mid_length doesn't equal boundaries (would cause infinite loop)
+            if mid_length <= min_length:
+                mid_length = min_length + step_m
+            elif mid_length >= max_length:
+                mid_length = max_length - step_m
+            
+            # Break if we can't make progress or if mid_length hasn't changed
+            if mid_length <= min_length or mid_length >= max_length:
+                break
+            if prev_mid_length is not None and abs(mid_length - prev_mid_length) < step_m / 2:
+                # Converged - mid_length isn't changing meaningfully
+                break
+            
+            prev_mid_length = mid_length
+            
+            # Calculate waste at this length
+            test_total_area = mid_length * panels_needed * quantity * product["ancho_util_m"]
+            test_useful_area = mid_length * width_m * quantity
+            
+            if test_total_area <= 0:
+                min_length = mid_length + step_m
+                continue
+            
+            test_waste_pct = ((test_total_area - test_useful_area) / test_total_area) * 100.0
+            
+            if test_waste_pct <= waste_threshold_pct:
+                # Waste is acceptable, try shorter length
+                best_length = mid_length
+                max_length = mid_length - step_m  # Move boundary away from mid
+            else:
+                # Waste too high, need longer panel
+                min_length = mid_length + step_m  # Move boundary away from mid
         
-        # Guard against division by zero
-        if test_total_area <= 0:
-            continue
-        
-        test_waste_pct = ((test_total_area - test_useful_area) / test_total_area) * 100.0
-        
-        # Check if this brings waste below threshold
-        if test_waste_pct <= waste_threshold_pct:
-            suggested_length_m = test_length
-            break
+        suggested_length_m = best_length
+    else:
+        # Range is small, use linear search
+        max_iterations = int((length_m - min_length) / step_m)
+        for i in range(1, max_iterations):
+            test_length = length_m - (i * step_m)
+            if test_length < min_length:
+                break
+            
+            # Recalculate with test length
+            test_total_area = test_length * panels_needed * quantity * product["ancho_util_m"]
+            test_useful_area = test_length * width_m * quantity
+            
+            # Guard against division by zero
+            if test_total_area <= 0:
+                continue
+            
+            test_waste_pct = ((test_total_area - test_useful_area) / test_total_area) * 100.0
+            
+            # Check if this brings waste below threshold
+            if test_waste_pct <= waste_threshold_pct:
+                suggested_length_m = test_length
+                break
     
     # If we couldn't find a better length, return None
     if suggested_length_m == length_m:
