@@ -1521,10 +1521,126 @@ configure_quotation_store(
 
 **🚀 For fast deployment, we provide automated helper tools:**
 
+#### Option 1: Claude Desktop with Auto-Start (Maximum Automation) ⭐ NEWEST
+
+**Fully automated - Claude starts deployment when you open it:**
+
+**Setup (one-time, 5 minutes):**
+```bash
+# Install MCP server for Claude Desktop
+python setup_claude_mcp.py
+```
+
+**Usage (every time):**
+```
+1. Open Claude Desktop
+2. Say: "Deploy the GPT"
+3. Claude handles everything automatically
+4. Approve final publication
+5. Done! (~5 minutes total)
+```
+
+**What happens automatically:**
+- ✅ Claude has deployment tools loaded on startup
+- ✅ Checks configuration status automatically
+- ✅ Generates config if needed
+- ✅ Uses Computer Use to deploy
+- ✅ No manual file management needed
+
+**Time:** ~5 minutes (one command + supervision)
+**Cost:** ~$0.45 per deployment (Claude API)
+**Prerequisites:** Claude Desktop
+
+See [CLAUDE_MCP_SETUP_GUIDE.md](CLAUDE_MCP_SETUP_GUIDE.md) for complete setup instructions and [CLAUDE_COMPUTER_USE_AUTOMATION.md](CLAUDE_COMPUTER_USE_AUTOMATION.md) for advanced usage.
+
+#### Option 2: GitHub Actions + Claude Computer Use (High Automation)
+
+**Most automated approach using AI-powered browser automation:**
+
+**What's Automated:**
+- ✅ Config generation via GitHub Actions (~1 min)
+- ✅ Browser-based deployment via Claude Computer Use (~5 min supervised)
+- ✅ File uploads, settings, verification
+- ✅ 65% time savings vs. manual
+
+**How it works:**
+```
+1. Push changes → GitHub Actions generates config
+2. Open Claude Desktop with Computer Use enabled
+3. Give Claude the deployment task
+4. Claude downloads artifacts, navigates OpenAI, uploads files
+5. You supervise and approve actions
+6. GPT is published
+```
+
+**Total time:** ~6 minutes (1 min automated + 5 min supervised)
+**Cost:** ~$0.45 per deployment (Claude API)
+**Prerequisites:** Claude Desktop with Computer Use enabled
+
+See [CLAUDE_COMPUTER_USE_AUTOMATION.md](CLAUDE_COMPUTER_USE_AUTOMATION.md) for complete setup guide, prompts, security considerations, and troubleshooting.
+
+#### Option 2: GitHub Actions Automation (Partial Automation)
+
+**Automates configuration generation via GitHub Actions:**
+
+**⚠️ Note:** This automates config generation but NOT deployment to OpenAI (no API exists). Manual upload to OpenAI GPT Builder still required (~15 minutes).
+
+**Automatic Triggers:**
+- Runs on push to main when GPT files change
+- Validates files automatically
+- Generates config package automatically
+- Uploads artifacts for download
+
+**Manual Trigger:**
+```
+1. Go to Actions tab → Generate GPT Configuration
+2. Click "Run workflow"
+3. Wait ~1 minute for completion
+4. Download "gpt-deployment-package" artifact
+5. Follow DEPLOYMENT_GUIDE.md to upload to OpenAI
+```
+
+**Time:** 1 min automated + 15 min manual upload = 16 min total
+
+See [GITHUB_ACTIONS_GPT_CONFIG.md](GITHUB_ACTIONS_GPT_CONFIG.md) for details or [AUTOMATED_GPT_CREATION_LIMITATIONS.md](AUTOMATED_GPT_CREATION_LIMITATIONS.md) for why full automation is impossible.
+
+#### Option 2: Local Autoconfiguration (Recommended for Testing)
+
+**Generate complete deployment-ready configuration with approval workflow:**
+
+**⚠️ Note:** This tool generates configuration files but does NOT automatically upload to OpenAI. Manual deployment through OpenAI GPT Builder is still required (no public API available).
+
+```bash
+# Run autoconfiguration tool
+python autoconfig_gpt.py
+
+# Review configuration summary
+# Type 'yes' to approve
+
+# Navigate to generated package
+cd GPT_Deploy_Package
+
+# Follow deployment guide for manual upload
+cat DEPLOYMENT_GUIDE.md
+```
+
+The autoconfiguration tool:
+- ✅ Validates all 21 required files
+- ✅ Generates complete GPT configuration
+- ✅ Creates OpenAI-compatible export
+- ✅ Provides step-by-step deployment guide
+- ✅ Includes interactive approval workflow
+- ⚠️ Manual upload to OpenAI still required (10-15 min)
+
+See [AUTOCONFIG_QUICK_START.md](AUTOCONFIG_QUICK_START.md) for details, [GPT_AUTOCONFIG_GUIDE.md](GPT_AUTOCONFIG_GUIDE.md) for comprehensive documentation, or [GPT_AUTOCONFIG_FAQ.md](GPT_AUTOCONFIG_FAQ.md) for common questions.
+
+#### Option 3: Manual Packaging
+
+**For traditional file organization and manual upload:**
+
 ```bash
 # Step 1: Validate all required files exist
-python \
-  validate_gpt_files.py
+python validate_gpt_files.py
 
 # Step 2: Package files for easy upload
 python package_gpt_files.py
