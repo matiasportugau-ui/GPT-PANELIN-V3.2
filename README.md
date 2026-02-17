@@ -514,9 +514,11 @@ A production-ready MCP server built on the MCP SDK that provides **18 specialize
 | Tool | Purpose | Handler |
 |------|---------|---------|
 | `persist_conversation` | Save conversation history to KB | `handlers/wolf_kb_write.py` |
-| `register_correction` | Register KB corrections | `handlers/wolf_kb_write.py` |
+| `register_correction` | Register KB corrections (prices, weights, specs) | `handlers/wolf_kb_write.py` |
 | `save_customer` | Store customer data | `handlers/wolf_kb_write.py` |
 | `lookup_customer` | Retrieve customer data | `handlers/wolf_kb_write.py` |
+
+> 📝 **New Feature:** The GPT can modify product weights (kg) in the catalog through `register_correction` tool. See [GPT_WEIGHT_MODIFICATION_GUIDE.md](GPT_WEIGHT_MODIFICATION_GUIDE.md) for complete documentation.
 
 **Self-Healing Governance Tools (2):**
 | Tool | Purpose | Handler |
@@ -1634,6 +1636,37 @@ The autoconfiguration tool:
 
 See [AUTOCONFIG_QUICK_START.md](AUTOCONFIG_QUICK_START.md) for details, [GPT_AUTOCONFIG_GUIDE.md](GPT_AUTOCONFIG_GUIDE.md) for comprehensive documentation, or [GPT_AUTOCONFIG_FAQ.md](GPT_AUTOCONFIG_FAQ.md) for common questions.
 
+#### Option 2.5: **Complete ZIP Package (Recommended for Sharing)** 🆕
+
+**For a complete, downloadable package with everything:**
+
+```bash
+# Quick method (recommended)
+./generate_gpt_package.sh
+
+# Or run Python script directly
+python create_gpt_zip_package.py
+
+# Output: GPT_Complete_Package/Panelin_GPT_Config_Package_[timestamp].zip
+# Contains: All 38 files (KB, configs, docs) in organized folders
+```
+
+This creates a **single ZIP file** (~290 KB) containing:
+- ✅ All 21 knowledge base files (organized by upload phase)
+- ✅ GPT configuration files (auto-generated)
+- ✅ All instruction and schema files
+- ✅ Deployment guides and documentation
+- ✅ README with quick start instructions
+- ✅ Complete file manifest
+
+**Perfect for:**
+- 📦 Sharing complete GPT configuration with team members
+- 💾 Archiving deployment-ready packages
+- 🚀 Fast deployment (extract and follow README)
+- 📤 Uploading to cloud storage for distribution
+
+See [GPT_ZIP_PACKAGE_GUIDE.md](GPT_ZIP_PACKAGE_GUIDE.md) for complete documentation.
+
 #### Option 3: Manual Packaging
 
 **For traditional file organization and manual upload:**
@@ -2132,6 +2165,7 @@ See [PANELIN_TRAINING_GUIDE.md](PANELIN_TRAINING_GUIDE.md) for details.
 | [EVOLUCIONADOR_FINAL_REPORT.md](EVOLUCIONADOR_FINAL_REPORT.md) | EVOLUCIONADOR completion report | 1.0.0 |
 | [WOLF_KB_WRITE_ACCESS_VERIFICATION.md](WOLF_KB_WRITE_ACCESS_VERIFICATION.md) | Wolf API write access verification guide | 3.4 |
 | [WOLF_WRITE_ACCESS_QUICK_GUIDE.md](WOLF_WRITE_ACCESS_QUICK_GUIDE.md) | Quick guide for Wolf API write capabilities | 3.4 |
+| [GPT_WEIGHT_MODIFICATION_GUIDE.md](GPT_WEIGHT_MODIFICATION_GUIDE.md) | Complete guide for modifying product weights (kg) via GPT | 3.4 |
 
 ### MCP Integration Documentation
 
