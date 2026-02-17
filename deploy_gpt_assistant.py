@@ -343,7 +343,10 @@ class AssistantDeployer:
             print(f"  DRY-RUN would {action} assistant")
             print(f"    Name: {params['name']}")
             print(f"    Model: {params['model']}")
-            print(f"    Tools: {[t['type'] if 'type' in t else t.get('function',{}).get('name','?') for t in params['tools']]}")
+            print(
+                f"    Tools: "
+                f"{[f\"fn:{t.get('function', {}).get('name', '?')}\" if t.get('type') == 'function' else t.get('type', '?') for t in params['tools']]}"
+            )
             return assistant_id or "dry-run-assistant-id"
 
         if assistant_id:
