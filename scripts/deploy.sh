@@ -110,7 +110,7 @@ deploy_docker_compose() {
     
     cd "$PROJECT_ROOT"
     
-    local compose_cmd=$(get_docker_compose_cmd)
+    local compose_cmd="$(get_docker_compose_cmd)"
     
     if [ -z "$compose_cmd" ]; then
         log_error "Docker Compose is not available"
@@ -159,7 +159,7 @@ rollback_deployment() {
     
     cd "$PROJECT_ROOT"
     
-    local compose_cmd=$(get_docker_compose_cmd)
+    local compose_cmd="$(get_docker_compose_cmd)"
     
     if [ -n "$compose_cmd" ]; then
         # Stop current containers
@@ -206,7 +206,7 @@ main() {
     fi
     
     # Check for Docker Compose (v1 or v2)
-    local compose_cmd=$(get_docker_compose_cmd)
+    local compose_cmd="$(get_docker_compose_cmd)"
     if [ -z "$compose_cmd" ]; then
         log_error "Docker Compose is not installed"
         log_info "Please install Docker Compose v2 (docker compose) or v1 (docker-compose)"
@@ -274,7 +274,7 @@ main() {
     
     # Show running containers
     log_info "Running containers:"
-    local compose_cmd=$(get_docker_compose_cmd)
+    local compose_cmd="$(get_docker_compose_cmd)"
     if [ -n "$compose_cmd" ]; then
         # Use word splitting intentionally - compose_cmd contains either "docker compose" or "docker-compose"
         # shellcheck disable=SC2086
