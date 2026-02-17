@@ -117,7 +117,13 @@ check_mcp_server() {
                 fi
             fi
         else
-            log_warning "Docker Compose not available, skipping container check"
+            if [ "$IS_CI" = "true" ]; then
+                log_warning "Docker Compose not available, skipping container check in CI environment"
+            else
+                log_error "Docker Compose not available; cannot verify MCP container state"
+                HEALTH_CHECK_FAILED=1
+                return 1
+            fi
         fi
     fi
     
