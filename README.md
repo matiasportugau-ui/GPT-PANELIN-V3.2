@@ -1639,7 +1639,10 @@ See [AUTOCONFIG_QUICK_START.md](AUTOCONFIG_QUICK_START.md) for details, [GPT_AUT
 **For a complete, downloadable package with everything:**
 
 ```bash
-# Generate comprehensive ZIP package
+# Quick method (recommended)
+./generate_gpt_package.sh
+
+# Or run Python script directly
 python create_gpt_zip_package.py
 
 # Output: GPT_Complete_Package/Panelin_GPT_Config_Package_[timestamp].zip

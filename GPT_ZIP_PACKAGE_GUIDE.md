@@ -12,6 +12,14 @@ This is the **fastest and easiest** way to get all files, schemas, instructions,
 
 ### Generate the ZIP Package
 
+**Option 1: Using the shell script (easiest)**
+
+```bash
+./generate_gpt_package.sh
+```
+
+**Option 2: Using Python directly**
+
 ```bash
 python3 create_gpt_zip_package.py
 ```
