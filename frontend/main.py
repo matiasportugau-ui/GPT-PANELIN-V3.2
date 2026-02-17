@@ -71,8 +71,8 @@ def status():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """
-    Chat endpoint that processes user messages and returns AI responses.
-    For now, returns a simple echo response. Will integrate with backend AI service.
+    Chat endpoint that processes user messages via backend service.
+    Integrates with backend AI processing and conversation storage.
     """
     try:
         data = request.get_json()
@@ -84,19 +84,39 @@ def chat():
                 'message': 'No message provided'
             }), 400
         
-        # TODO: Integrate with backend AI service and Wolf API KB Write
-        # For now, return a simple response
-        response_text = (
-            f"Gracias por tu mensaje. Actualmente estoy en desarrollo. "
-            f"Recibí: '{user_message}'. Pronto podré ayudarte con cotizaciones "
-            f"de paneles BMC Uruguay."
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'response': response_text,
-            'message_received': user_message
-        }), 200
+        # Forward to backend service
+        try:
+            response = requests.post(
+                f"{BACKEND_SERVICE_URL}/api/chat",
+                json={'message': user_message, 'user_id': 'web_user'},
+                timeout=30
+            )
+            response.raise_for_status()
+            backend_data = response.json()
+            
+            return jsonify(backend_data), 200
+            
+        except requests.exceptions.ConnectionError:
+            # Fallback response if backend is unavailable
+            return jsonify({
+                'status': 'success',
+                'response': (
+                    f"Recibí tu mensaje: '{user_message}'. "
+                    "El servicio backend no está disponible en este momento. "
+                    "Por favor, intenta nuevamente más tarde."
+                ),
+                'backend_available': False
+            }), 200
+            
+        except requests.exceptions.Timeout:
+            return jsonify({
+                'status': 'success',
+                'response': (
+                    "El servicio está tardando más de lo esperado. "
+                    "Por favor, intenta nuevamente."
+                ),
+                'backend_available': False
+            }), 200
         
     except Exception as e:
         return jsonify({
