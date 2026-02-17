@@ -61,7 +61,7 @@ class GPTZipPackager:
             "Phase_5_Supporting": [
                 "Instrucciones GPT.rtf",
                 "Panelin_GPT_config.json",
-                "Esquema json.rtf",
+                "Esquema json.rtf",  # Note: Filename contains space (part of original repo structure)
             ],
             "Phase_6_Assets": [
                 "bmc_logo.png",
