@@ -255,14 +255,6 @@ class AssistantDeployer:
                 file_ids[filename] = uploaded.id
                 print(f"  UPLOADED: {filename} -> {uploaded.id}")
                 uploaded_count += 1
-
-                # After successful upload, delete old file if it exists (avoid orphans)
-                if filename in old_file_ids:
-                    try:
-                        self.client.files.delete(old_file_ids[filename])
-                    except Exception:
-                        # Best-effort cleanup; do not fail deployment on delete errors
-                        pass
             except Exception as e:
                 print(f"  FAILED: {filename} - {e}")
                 failed_count += 1
