@@ -191,7 +191,7 @@ These RTF files are used for:
 3. ⬜ Test Wolf API KB Write endpoints with new schema
 4. ⬜ Verify password validation works correctly
 5. ⬜ Test customer lookup (no password) vs customer save (password required)
-6. ⬜ Document KB Write password for team access
+6. ⬜ Document KB Write password access process (use secure secret manager / out-of-band; never store password in repo or shared docs)
 
 ---
 
