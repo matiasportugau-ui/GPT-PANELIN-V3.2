@@ -43,8 +43,18 @@ log_warning() {
 # Exit status
 HEALTH_CHECK_FAILED=0
 
-# Detect CI environment
-IS_CI="${CI:-false}"
+# Detect CI environment (normalize to strict boolean: "true" or "false")
+case "${CI:-false}" in
+    1|true|TRUE|yes|YES)
+        IS_CI="true"
+        ;;
+    0|false|FALSE|no|NO|'')
+        IS_CI="false"
+        ;;
+    *)
+        IS_CI="false"
+        ;;
+esac
 
 # Function to detect Docker Compose command (v2 vs v1)
 get_docker_compose_cmd() {
