@@ -1,10 +1,11 @@
 """
 Frontend Service - Flask Application
 Provides a simple web interface that communicates with the backend service.
+Includes a chat interface for the Panelin BMC Uruguay assistant.
 """
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, request
 import requests
 
 app = Flask(__name__)
@@ -21,7 +22,15 @@ BACKEND_SERVICE_URL = os.environ.get(
 @app.route('/')
 def index():
     """
-    Main route that fetches data from the backend service.
+    Main route that serves the chat interface.
+    """
+    return render_template('chat.html')
+
+
+@app.route('/api/status')
+def status():
+    """
+    Status endpoint that fetches data from the backend service.
     Includes error handling for when backend is unavailable.
     """
     try:
@@ -56,6 +65,43 @@ def index():
             'status': 'error',
             'message': f'Error communicating with backend: {str(e)}',
             'backend_url': BACKEND_SERVICE_URL
+        }), 500
+
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """
+    Chat endpoint that processes user messages and returns AI responses.
+    For now, returns a simple echo response. Will integrate with backend AI service.
+    """
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '')
+        
+        if not user_message:
+            return jsonify({
+                'status': 'error',
+                'message': 'No message provided'
+            }), 400
+        
+        # TODO: Integrate with backend AI service and Wolf API KB Write
+        # For now, return a simple response
+        response_text = (
+            f"Gracias por tu mensaje. Actualmente estoy en desarrollo. "
+            f"Recibí: '{user_message}'. Pronto podré ayudarte con cotizaciones "
+            f"de paneles BMC Uruguay."
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'response': response_text,
+            'message_received': user_message
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Error processing chat message: {str(e)}'
         }), 500
 
 
