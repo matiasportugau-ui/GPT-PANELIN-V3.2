@@ -197,9 +197,27 @@ class AssistantDeployer:
                     prop["items"] = {"type": "string"}
                 properties[param_name] = prop
 
-            # All declared parameters are required by default
-            # (config doesn't specify required/optional distinction)
-            required_params = list(properties.keys())
+            # Determine which parameters are required.
+            # 1) If the action explicitly specifies "required" in the config,
+            #    use that list (filtered to known properties).
+            # 2) Otherwise, infer optional parameters using simple heuristics:
+            #    - Descriptions containing "optional" or "if applicable"
+            #    - Common optional-ish field names like "notes"
+            explicit_required = action.get("required")
+            if isinstance(explicit_required, list):
+                required_params = [
+                    name for name in explicit_required if name in properties
+                ]
+            else:
+                required_params = []
+                for name, prop in properties.items():
+                    desc = (prop.get("description") or "").lower()
+                    # Heuristics to detect optional parameters
+                    if "optional" in desc or "if applicable" in desc:
+                        continue
+                    if name in {"notes"}:
+                        continue
+                    required_params.append(name)
 
             function_tools.append({
                 "type": "function",
