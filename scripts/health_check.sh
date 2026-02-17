@@ -95,7 +95,7 @@ check_mcp_server() {
                 log_success "MCP server container is running"
             else
                 if [ "$IS_CI" = "true" ]; then
-                    log_warning "MCP server container is not running (expected in CI)"
+                    log_warning "MCP server container is not running (container checks skipped in CI)"
                 else
                     log_error "MCP server container is not running"
                     HEALTH_CHECK_FAILED=1
@@ -103,7 +103,7 @@ check_mcp_server() {
                 fi
             fi
         else
-            log_warning "Docker Compose not available, skipping container check"
+            log_warning "Docker Compose not available, skipping container checks"
         fi
     fi
     
@@ -232,7 +232,7 @@ check_docker_resources() {
             log_warning "No containers are currently running"
         fi
     else
-        log_warning "Docker Compose not available, skipping container count"
+        log_warning "Docker Compose not available, skipping container checks"
     fi
     
     return 0
