@@ -86,7 +86,8 @@ check_mcp_server() {
     
     # Check if server process is running (Docker context)
     if command -v docker >/dev/null 2>&1; then
-        local compose_cmd=$(get_docker_compose_cmd)
+        local compose_cmd
+        compose_cmd=$(get_docker_compose_cmd)
         
         if [ -n "$compose_cmd" ]; then
             if $compose_cmd ps 2>/dev/null | grep -q "panelin-bot.*Up"; then
@@ -212,7 +213,8 @@ check_docker_resources() {
     fi
     
     # Check running containers if Docker Compose is available
-    local compose_cmd=$(get_docker_compose_cmd)
+    local compose_cmd
+    compose_cmd=$(get_docker_compose_cmd)
     
     if [ -n "$compose_cmd" ]; then
         local container_count=$($compose_cmd ps -q 2>/dev/null | wc -l)
