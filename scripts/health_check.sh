@@ -59,16 +59,6 @@ get_docker_compose_cmd() {
     fi
 }
 
-# Function to run docker compose command
-run_docker_compose() {
-    local compose_cmd=$(get_docker_compose_cmd)
-    if [ -z "$compose_cmd" ]; then
-        return 1
-    fi
-    # Use eval to safely execute multi-word commands
-    eval "$compose_cmd" "$@"
-}
-
 # Function to check if URL is accessible
 check_url() {
     local url="$1"
@@ -102,7 +92,8 @@ check_mcp_server() {
         local compose_cmd=$(get_docker_compose_cmd)
         
         if [ -n "$compose_cmd" ]; then
-            if run_docker_compose ps 2>/dev/null | grep -q "panelin-bot.*Up"; then
+            # Use word splitting intentionally - compose_cmd is controlled
+            if $compose_cmd ps 2>/dev/null | grep -q "panelin-bot.*Up"; then
                 log_success "MCP server container is running"
             else
                 # In CI environments, containers may not be running - treat as warning
@@ -246,7 +237,8 @@ check_docker_resources() {
     # Check running containers
     local compose_cmd=$(get_docker_compose_cmd)
     if [ -n "$compose_cmd" ]; then
-        local container_count=$(run_docker_compose ps -q 2>/dev/null | wc -l)
+        # Use word splitting intentionally - compose_cmd is controlled
+        local container_count=$($compose_cmd ps -q 2>/dev/null | wc -l)
         if [ "$container_count" -gt 0 ]; then
             log_success "$container_count container(s) running"
         else
