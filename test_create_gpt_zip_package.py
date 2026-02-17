@@ -157,7 +157,7 @@ class TestPackageGeneration:
     """Integration tests for full package generation."""
     
     @pytest.mark.skipif(
-        not Path("BMC_Base_Conocimiento_GPT-2.json").exists(),
+        not (Path.cwd() / "BMC_Base_Conocimiento_GPT-2.json").exists(),
         reason="Required KB files not present"
     )
     def test_full_package_generation(self):
@@ -233,7 +233,7 @@ class TestErrorHandling:
     
     def test_packager_with_nonexistent_repo_root(self):
         """Test packager behavior with nonexistent directory."""
-        nonexistent_path = Path("/tmp/nonexistent_repo_12345")
+        nonexistent_path = Path(tempfile.gettempdir()) / "nonexistent_repo_test_12345"
         packager = create_gpt_zip_package.GPTZipPackager(nonexistent_path)
         
         # Should initialize but validation should fail
