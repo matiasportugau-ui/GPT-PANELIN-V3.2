@@ -199,6 +199,28 @@ class AssistantDeployer:
                     prop["items"] = {"type": "string"}
                 properties[param_name] = prop
 
+            # Determine which parameters are required.
+            # 1) If the action explicitly specifies "required" in the config,
+            #    use that list (filtered to known properties).
+            # 2) Otherwise, infer optional parameters using simple heuristics:
+            #    - Descriptions containing "optional" or "if applicable"
+            #    - Common optional-ish field names like "notes"
+            explicit_required = action.get("required")
+            if isinstance(explicit_required, list):
+                required_params = [
+                    name for name in explicit_required if name in properties
+                ]
+            else:
+                required_params = []
+                for name, prop in properties.items():
+                    desc = (prop.get("description") or "").lower()
+                    # Heuristics to detect optional parameters
+                    if "optional" in desc or "if applicable" in desc:
+                        continue
+                    if name in {"notes"}:
+                        continue
+                    required_params.append(name)
+
             function_tools.append({
                 "type": "function",
                 "function": {
@@ -207,7 +229,7 @@ class AssistantDeployer:
                     "parameters": {
                         "type": "object",
                         "properties": properties,
-                        "required": [],
+                        "required": required_params,
                     },
                 },
             })
@@ -274,7 +296,11 @@ class AssistantDeployer:
     def create_or_update_vector_store(
         self, file_ids: Dict[str, str], current_state: Optional[Dict[str, Any]]
     ) -> str:
-        """Create or replace a vector store with the uploaded files."""
+        """Create or replace a vector store with the uploaded files.
+        
+        Reuses existing vector store when KB file content is unchanged to avoid
+        unnecessary vector store creation and associated costs.
+        """
         all_file_ids = list(file_ids.values())
         old_vs_id = (current_state or {}).get("vector_store_id")
         kb_version = self.config.get("knowledge_base", {}).get("version", "?")
@@ -286,7 +312,19 @@ class AssistantDeployer:
         if not all_file_ids:
             raise RuntimeError("No files to add to vector store")
 
-        # Create new vector store
+        # Check if KB files are unchanged - reuse existing vector store if so
+        current_file_hashes = self.compute_file_hashes()
+        old_file_hashes = (current_state or {}).get("file_hashes", {})
+        
+        if (
+            not self.force
+            and old_vs_id
+            and current_file_hashes == old_file_hashes
+        ):
+            print(f"  Reusing existing vector store: {old_vs_id} (KB unchanged)")
+            return old_vs_id
+
+        # Create new vector store when KB content changes
         vs = self.client.beta.vector_stores.create(
             name=f"Panelin KB v{kb_version}",
             file_ids=all_file_ids,
@@ -345,6 +383,14 @@ class AssistantDeployer:
             print(f"  DRY-RUN would {action} assistant")
             print(f"    Name: {params['name']}")
             print(f"    Model: {params['model']}")
+            # Extract list comprehension to avoid nested f-string syntax error
+            tools_list = [
+                f"fn:{t.get('function', {}).get('name', '?')}" 
+                if t.get('type') == 'function' 
+                else t.get('type', '?') 
+                for t in params['tools']
+            ]
+            print(f"    Tools: {tools_list}")
             # Extract list comprehension to avoid nested f-string
             tool_list = [
                 f"fn:{t.get('function', {}).get('name', '?')}" if t.get('type') == 'function' else t.get('type', '?') 
@@ -437,7 +483,12 @@ class AssistantDeployer:
         return all_passed
 
     def rollback(self) -> int:
-        """Restore the previous deployment from backup state."""
+        """Restore the previous vector store attachment from backup state.
+        
+        Note: This only restores the vector_store_id in tool_resources.
+        It does NOT revert assistant name, instructions, model, or tools.
+        For full config reversion, manually revert config changes and redeploy.
+        """
         backup_path = self.repo_root / self.STATE_BACKUP
         if not backup_path.exists():
             print("ERROR: No backup state found (.gpt_assistant_state.json.bak)")
@@ -446,27 +497,25 @@ class AssistantDeployer:
         with open(backup_path, "r", encoding="utf-8") as f:
             old_state = json.load(f)
 
-        print("Restoring from backup state...")
+        print("Restoring vector store attachment from backup state...")
         print(f"  Assistant ID: {old_state.get('assistant_id', 'N/A')}")
-        print(f"  Config version: {old_state.get('config_version', 'N/A')}")
+        print(f"  Vector Store ID: {old_state.get('vector_store_id', 'N/A')}")
         print(f"  Last deployed: {old_state.get('last_deployed', 'N/A')}")
 
         if self.dry_run:
-            print("  DRY-RUN: Would restore above state")
+            print("  DRY-RUN: Would restore above vector store attachment")
             return 0
 
         self._init_client()
 
-        # Re-read config to get the instructions from the old version
-        # We can only restore the assistant params, not revert file contents
-        # The rollback re-applies the state's metadata to the assistant
         assistant_id = old_state.get("assistant_id")
         if not assistant_id:
             print("ERROR: No assistant_id in backup state")
             return 1
 
         try:
-            # Restore vector store attachment
+            # Restore vector store attachment only
+            # Note: This does not revert assistant metadata (name/instructions/tools)
             vs_id = old_state.get("vector_store_id")
             update_params: Dict[str, Any] = {}
             if vs_id:
@@ -475,14 +524,14 @@ class AssistantDeployer:
                 }
 
             self.client.beta.assistants.update(assistant_id, **update_params)
-            print(f"  Restored assistant {assistant_id}")
+            print(f"  Restored vector store attachment for assistant {assistant_id}")
         except Exception as e:
             print(f"  ERROR: Rollback failed - {e}")
             return 1
 
         # Restore state file
         self.save_state(old_state)
-        print("  Rollback complete")
+        print("  Rollback complete (vector store attachment only)")
         return 0
 
     def _print_summary(self, state: Dict[str, Any], params: Dict[str, Any]) -> None:
@@ -685,7 +734,7 @@ def main():
     parser.add_argument(
         "--rollback",
         action="store_true",
-        help="Rollback to previous deployment state",
+        help="Restore previous vector store attachment from backup state (does not revert assistant name/instructions/tools)",
     )
     parser.add_argument(
         "--allow-partial",
