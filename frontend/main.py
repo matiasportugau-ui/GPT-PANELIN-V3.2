@@ -99,10 +99,9 @@ def chat():
                 json={'message': user_message, 'user_id': user_id},
                 timeout=30
             )
-            response.raise_for_status()
             backend_data = response.json()
-            
-            return jsonify(backend_data), 200
+
+            return jsonify(backend_data), response.status_code
             
         except requests.exceptions.ConnectionError:
             # Fallback response if backend is unavailable
